@@ -2,7 +2,7 @@ import { Router } from 'express'
 import * as controller from '../controllers/event.controller.js'
 import { authenticate, optionalAuthenticate } from '../middleware/auth.middleware.js'
 import { requireRole } from '../middleware/role.middleware.js'
-import { imageUpload } from '../middleware/upload.middleware.js'
+import { singleImageUpload } from '../middleware/upload.middleware.js'
 import { validate } from '../middleware/validation.middleware.js'
 import asyncHandler from '../utils/asyncHandler.js'
 import { idParams } from '../validators/common.validator.js'
@@ -27,7 +27,7 @@ router.post(
   authenticate,
   requireRole('club', 'admin'),
   validate({ params: idParams }),
-  imageUpload.single('banner'),
+  singleImageUpload('banner'),
   asyncHandler(controller.uploadBanner),
 )
 router.get('/:id', optionalAuthenticate, validate({ params: idParams }), asyncHandler(controller.getOne))

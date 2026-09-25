@@ -1,19 +1,9 @@
-import mongoose from 'mongoose'
 import Club from '../models/Club.js'
 import User from '../models/User.js'
 import ApiError from '../utils/ApiError.js'
 import { getEnv } from '../config/env.js'
 import { hashToken, secureToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js'
-import { makeSlug } from '../utils/slug.js'
 import { verifySignupOtp } from './otp.service.js'
-
-async function availableClubSlug(name, session) {
-  const base = makeSlug(name) || 'club'
-  let slug = base
-  let suffix = 1
-  while (await Club.exists({ slug }).session(session || null)) slug = `${base}-${++suffix}`
-  return slug
-}
 
 async function issueTokens(user) {
   const accessToken = signAccessToken(user)

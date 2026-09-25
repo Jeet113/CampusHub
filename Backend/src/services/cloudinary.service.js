@@ -1,69 +1,70 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import crypto from 'node:crypto'
 import { getCloudinary } from '../config/cloudinary.js'
-
-function getExtension(mimetype) {
-  if (mimetype === 'image/png') return 'png'
-  if (mimetype === 'image/jpeg' || mimetype === 'image/jpg') return 'jpg'
-  if (mimetype === 'image/webp') return 'webp'
-  if (mimetype === 'image/gif') return 'gif'
-  if (mimetype === 'application/pdf') return 'pdf'
-  return 'png'
-}
-
-async function saveLocalFallback(file, folder) {
-  const uploadsBase = path.join(process.cwd(), 'uploads', folder)
-  await fs.promises.mkdir(uploadsBase, { recursive: true })
-  const ext = getExtension(file.mimetype)
-  const filename = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}.${ext}`
-  const filePath = path.join(uploadsBase, filename)
-  await fs.promises.writeFile(filePath, file.buffer)
-  const resourceType = file.mimetype === 'application/pdf' ? 'raw' : 'image'
-  return {
-    url: `/uploads/${folder}/${filename}`,
-    publicId: `local:${folder}/${filename}`,
-    resourceType,
-  }
-}
+import ApiError from '../utils/ApiError.js'
 
 export async function uploadBuffer(file, folder) {
-  const resourceType = file.mimetype === 'application/pdf' ? 'raw' : 'image'
-
-  try {
-    const client = getCloudinary()
-    const result = await new Promise((resolve, reject) => {
-      const stream = client.uploader.upload_stream(
-        { folder: `campushub/${folder}`, resource_type: resourceType, use_filename: false, unique_filename: true },
-        (error, res) => {
-          if (error) return reject(error)
-          return resolve(res)
-        },
-      )
-      stream.end(file.buffer)
-    })
-    return { url: result.secure_url, publicId: result.public_id, resourceType }
-  } catch (error) {
-    console.warn(`[Asset Upload] Cloudinary upload notice (${error.message || 'error'}), using storage fallback.`)
-    return saveLocalFallback(file, folder)
+  if (!file || !file.buffer) {
+    throw new ApiError(400, 'No file buffer provided for upload')
   }
+
+  const resourceType = file.mimetype === 'application/pdf' ? 'raw' : 'image'
+  const client = getCloudinary()
+
+  return new Promise((resolve, reject) => {
+    const stream = client.uploader.upload_stream(
+      {
+        folder: `campushub/${folder}`,
+        resource_type: resourceType,
+        use_filename: false,
+        unique_filename: true,
+      },
+      (error, result) => {
+        if (error) {
+          return reject(
+            new ApiError(502, `Cloudinary upload failed: ${error.message || 'unknown error'}`),
+          )
+        }
+        return resolve({
+          imageUrl: result.secure_url,
+          url: result.secure_url,
+          cloudinaryPublicId: result.public_id,
+          publicId: result.public_id,
+          resourceType: result.resource_type || resourceType,
+        })
+      },
+    )
+
+    stream.end(file.buffer)
+  })
 }
 
 export async function deleteAsset(asset) {
-  if (!asset?.publicId) return
-  if (asset.publicId.startsWith('local:')) {
-    const rel = asset.publicId.replace('local:', '')
-    const filePath = path.join(process.cwd(), 'uploads', rel)
-    try {
-      if (fs.existsSync(filePath)) await fs.promises.unlink(filePath)
-    } catch (err) {
-      console.error('Failed to remove local asset:', err.message)
+  if (!asset) return
+  const publicId = typeof asset === 'string' ? asset : (asset.cloudinaryPublicId || asset.publicId)
+  if (!publicId) return
+
+  // Backward compatibility: clean up legacy local files if encountered
+  if (publicId.startsWith('local:')) {
+    const rel = publicId.replace('local:', '')
+    const localPaths = [
+      path.join(process.cwd(), 'uploads', rel),
+      path.join(process.cwd(), 'src', 'uploads', rel),
+    ]
+    for (const filePath of localPaths) {
+      try {
+        if (fs.existsSync(filePath)) await fs.promises.unlink(filePath)
+      } catch (err) {
+        console.error('Failed to remove legacy local asset:', err.message)
+      }
     }
     return
   }
+
   try {
     const client = getCloudinary()
-    await client.uploader.destroy(asset.publicId, { resource_type: asset.resourceType || 'image', invalidate: true })
+    const resourceType = asset.resourceType || (publicId.endsWith('.pdf') ? 'raw' : 'image')
+    await client.uploader.destroy(publicId, { resource_type: resourceType, invalidate: true })
   } catch (err) {
     console.warn('Cloudinary delete notice:', err.message)
   }
@@ -73,6 +74,9 @@ export async function safelyDeleteAsset(asset) {
   try {
     await deleteAsset(asset)
   } catch (error) {
-    console.error(`Unable to delete asset ${asset?.publicId || 'unknown'}:`, error.message)
+    console.error(
+      `Unable to delete asset ${asset?.cloudinaryPublicId || asset?.publicId || 'unknown'}:`,
+      error.message,
+    )
   }
 }

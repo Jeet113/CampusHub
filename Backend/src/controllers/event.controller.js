@@ -66,7 +66,12 @@ export async function unsave(request, response) {
 }
 
 export async function uploadBanner(request, response) {
+  const event = await replaceEventBanner(input(request, 'params').id, request.file, request.user)
+  const asset = event.banner
   return response.json(
-    new ApiResponse(await replaceEventBanner(input(request, 'params').id, request.file, request.user), 'Event banner updated'),
+    new ApiResponse(event, 'Event banner updated', {
+      imageUrl: asset?.imageUrl || asset?.url,
+      cloudinaryPublicId: asset?.cloudinaryPublicId || asset?.publicId,
+    }),
   )
 }

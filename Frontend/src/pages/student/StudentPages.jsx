@@ -67,6 +67,7 @@ export function StudentProfile(){
     }
 
     const formData=new FormData();
+    formData.append('image',file);
     formData.append('avatar',file);
 
     setUploading(true);
@@ -74,6 +75,9 @@ export function StudentProfile(){
       const res=await api.post('/users/me/avatar',formData);
       if(res?.data){
         updateUser(res.data);
+        toast('Profile photo uploaded and saved to Cloudinary!');
+      } else if (res?.imageUrl) {
+        updateUser({ profileImage: { imageUrl: res.imageUrl, url: res.imageUrl, cloudinaryPublicId: res.cloudinaryPublicId } });
         toast('Profile photo uploaded and saved to Cloudinary!');
       }
     }catch(err){

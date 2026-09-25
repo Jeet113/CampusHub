@@ -1,9 +1,18 @@
 import dotenv from 'dotenv'
+import fs from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import { z } from 'zod'
 
 export const rootEnvPath = fileURLToPath(new URL('../../../.env', import.meta.url))
-dotenv.config({ path: rootEnvPath })
+export const backendEnvPath = fileURLToPath(new URL('../../.env', import.meta.url))
+
+if (fs.existsSync(backendEnvPath)) {
+  dotenv.config({ path: backendEnvPath })
+}
+if (fs.existsSync(rootEnvPath)) {
+  dotenv.config({ path: rootEnvPath })
+}
+dotenv.config()
 
 const blankToUndefined = (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value)
 const optionalText = z.preprocess(blankToUndefined, z.string().trim().optional()).default('')
@@ -25,6 +34,7 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: optionalText,
   CLOUDINARY_API_KEY: optionalText,
   CLOUDINARY_API_SECRET: optionalText,
+  CLOUDINARY_URL: optionalText,
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
   SEED_PASSWORD: optionalText,
   EMAIL_USER: optionalText,

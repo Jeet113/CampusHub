@@ -107,11 +107,12 @@ export function ClubDashboard() {
       return
     }
     const formData = new FormData()
+    formData.append('image', file)
     formData.append('banner', file)
     setUploadingBanner(true)
     try {
       await api.post(`/clubs/${user.club}/banner`, formData)
-      toast('Club banner uploaded and saved!')
+      toast('Club banner uploaded and saved to Cloudinary!')
       refetchClub()
     } catch (err) {
       toast(err.message || 'Failed to upload banner')
@@ -129,11 +130,12 @@ export function ClubDashboard() {
       return
     }
     const formData = new FormData()
+    formData.append('image', file)
     formData.append('logo', file)
     setUploadingLogo(true)
     try {
       const res = await api.post(`/clubs/${user.club}/logo`, formData)
-      toast('Club logo uploaded successfully!')
+      toast('Club logo uploaded to Cloudinary successfully!')
       if (updateUser) updateUser({ profileImage: res.data?.logo || res.data })
       refetchClub()
     } catch (err) {
@@ -656,6 +658,7 @@ export function ClubProfile() {
     const file = e.target.files?.[0]
     if (!file || !user?.club) return
     const formData = new FormData()
+    formData.append('image', file)
     formData.append('logo', file)
     setUploadingLogo(true)
     try {
@@ -675,6 +678,7 @@ export function ClubProfile() {
     const file = e.target.files?.[0]
     if (!file || !user?.club) return
     const formData = new FormData()
+    formData.append('image', file)
     formData.append('banner', file)
     setUploadingBanner(true)
     try {
@@ -1205,6 +1209,7 @@ export function CreateEvent() {
       if (bannerFile && createdEvent?._id) {
         try {
           const bannerData = new FormData()
+          bannerData.append('image', bannerFile)
           bannerData.append('banner', bannerFile)
           await api.post(`/events/${createdEvent._id}/banner`, bannerData)
         } catch (bannerErr) {

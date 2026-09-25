@@ -17,5 +17,13 @@ export async function updatePassword(request, response) {
 }
 
 export async function uploadAvatar(request, response) {
-  return response.json(new ApiResponse(await replaceAvatar(request.user._id, request.file), 'Avatar updated'))
+  const user = await replaceAvatar(request.user._id, request.file)
+  const imageUrl = user.profileImage?.imageUrl || user.profileImage?.url
+  const cloudinaryPublicId = user.profileImage?.cloudinaryPublicId || user.profileImage?.publicId
+  return response.json(
+    new ApiResponse(user, 'Avatar updated', {
+      imageUrl,
+      cloudinaryPublicId,
+    }),
+  )
 }

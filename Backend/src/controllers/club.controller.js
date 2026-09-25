@@ -61,13 +61,23 @@ export async function deleteMember(request, response) {
 }
 
 export async function uploadLogo(request, response) {
+  const club = await replaceClubAsset(input(request, 'params').id, 'logo', request.file, request.user)
+  const asset = club.logo
   return response.json(
-    new ApiResponse(await replaceClubAsset(input(request, 'params').id, 'logo', request.file, request.user), 'Club logo updated'),
+    new ApiResponse(club, 'Club logo updated', {
+      imageUrl: asset?.imageUrl || asset?.url,
+      cloudinaryPublicId: asset?.cloudinaryPublicId || asset?.publicId,
+    }),
   )
 }
 
 export async function uploadBanner(request, response) {
+  const club = await replaceClubAsset(input(request, 'params').id, 'banner', request.file, request.user)
+  const asset = club.banner
   return response.json(
-    new ApiResponse(await replaceClubAsset(input(request, 'params').id, 'banner', request.file, request.user), 'Club banner updated'),
+    new ApiResponse(club, 'Club banner updated', {
+      imageUrl: asset?.imageUrl || asset?.url,
+      cloudinaryPublicId: asset?.cloudinaryPublicId || asset?.publicId,
+    }),
   )
 }

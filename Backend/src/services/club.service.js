@@ -101,6 +101,8 @@ export async function deleteClub(identifier, user) {
   if (!club) throw new ApiError(404, 'Club not found')
   assertCanManage(user, club)
   const eventIds = await Event.find({ club: club._id }).distinct('_id')
+  const events = await Event.find({ club: club._id }).select('banner')
+  const notices = await Notice.find({ club: club._id }).select('attachments')
   const session = await mongoose.startSession()
   try {
     await session.withTransaction(async () => {
@@ -116,7 +118,12 @@ export async function deleteClub(identifier, user) {
   } finally {
     await session.endSession()
   }
-  await Promise.all([safelyDeleteAsset(club.logo), safelyDeleteAsset(club.banner)])
+  await Promise.all([
+    safelyDeleteAsset(club.logo),
+    safelyDeleteAsset(club.banner),
+    ...events.map((e) => safelyDeleteAsset(e.banner)),
+    ...notices.flatMap((n) => (n.attachments || []).map(safelyDeleteAsset)),
+  ])
 }
 
 export async function joinClub(identifier, user) {

@@ -17,7 +17,7 @@ export function setAccessToken(token) {
 
 export function getAssetUrl(asset) {
   if (!asset) return null
-  const url = typeof asset === 'string' ? asset : asset.url
+  const url = typeof asset === 'string' ? asset : (asset.imageUrl || asset.url)
   if (!url) return null
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
   const base = API_URL.replace(/\/api\/v1\/?$/, '')

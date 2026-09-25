@@ -9,6 +9,7 @@ import User from '../models/User.js'
 import ApiError from '../utils/ApiError.js'
 import { makeSlug } from '../utils/slug.js'
 import { createNotification } from './notification.service.js'
+import { safelyDeleteAsset } from './cloudinary.service.js'
 
 const modelConfig = {
   club: { Model: Club, approved: 'approved', pending: 'pending', rejected: 'rejected' },
@@ -157,6 +158,7 @@ export async function deleteUser(id, admin) {
   } finally {
     await session.endSession()
   }
+  await safelyDeleteAsset(user.profileImage)
 }
 
 async function availableClubSlug(name, session) {
