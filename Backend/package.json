@@ -1,0 +1,50 @@
+{
+  "name": "campushub-backend",
+  "version": "1.0.0",
+  "description": "Production-ready CampusHub REST API",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "build": "node scripts/build.js",
+    "start": "node src/server.js",
+    "seed": "node src/database/seed.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "node scripts/integration-test.js",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\""
+  },
+  "keywords": [
+    "campus",
+    "express",
+    "mongodb",
+    "rest-api"
+  ],
+  "author": "CampusHub",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.6.0",
+    "mongoose": "^9.9.4",
+    "multer": "^2.2.0",
+    "nodemailer": "^9.0.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "eslint": "^10.9.1",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.9.6",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,3 @@
+import Logo from './Logo'
+const groups={Platform:['Events','Clubs','Notices'],Community:['Students','Organizations','Administration'],Support:['Help Center','Contact','Privacy']}
+export default function Footer(){return <footer className="site-footer"><div className="container footer-grid"><div className="footer-brand"><Logo/><p>Connecting students, clubs and campus communities.</p></div>{Object.entries(groups).map(([name,items])=><div key={name}><h3>{name}</h3>{items.map(i=><a href="#" key={i}>{i}</a>)}</div>)}</div><div className="container footer-bottom"><span>© 2026 CampusHub</span><span>Made for university life.</span></div></footer>}
