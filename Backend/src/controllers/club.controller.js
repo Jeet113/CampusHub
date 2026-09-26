@@ -4,6 +4,7 @@ import {
   createClub,
   deleteClub,
   getClub,
+  getClubDashboard,
   joinClub,
   listClubs,
   listMembers,
@@ -12,6 +13,12 @@ import {
   updateClub,
   updateMember,
 } from '../services/club.service.js'
+
+export async function dashboard(request, response) {
+  return response.json(
+    new ApiResponse(await getClubDashboard(input(request, 'params').id, request.user), 'Club dashboard retrieved'),
+  )
+}
 
 export async function list(request, response) {
   const result = await listClubs(input(request, 'query'), request.user)

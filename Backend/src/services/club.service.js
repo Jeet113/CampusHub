@@ -13,7 +13,10 @@ import { safelyDeleteAsset, uploadBuffer } from './cloudinary.service.js'
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-function identifierFilter(identifier) {
+function identifierFilter(identifier, user) {
+  if (identifier === 'mine' && user) {
+    return user.club ? { _id: user.club } : { createdBy: user._id }
+  }
   return mongoose.isValidObjectId(identifier) ? { _id: identifier } : { slug: identifier }
 }
 
@@ -23,6 +26,73 @@ function canManage(user, club) {
 
 function assertCanManage(user, club) {
   if (!canManage(user, club)) throw new ApiError(403, 'You may manage only your own club')
+}
+
+export async function getClubDashboard(identifier, user) {
+  const filter = identifierFilter(identifier, user)
+  const club = await Club.findOne(filter).populate('createdBy', 'name email')
+  if (!club) throw new ApiError(404, 'Club not found')
+  assertCanManage(user, club)
+
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  const [
+    totalMembers,
+    events,
+    totalNotices,
+    recentMembers,
+    recentNotices,
+  ] = await Promise.all([
+    Membership.countDocuments({ club: club._id, status: 'approved' }),
+    Event.find({ club: club._id }).sort({ date: -1 }),
+    Notice.countDocuments({ $or: [{ club: club._id }, { author: user._id }] }),
+    Membership.find({ club: club._id, status: 'approved' })
+      .populate('user', 'name email studentId department profileImage status')
+      .sort({ createdAt: -1 })
+      .limit(6),
+    Notice.find({ $or: [{ club: club._id }, { author: user._id }] })
+      .sort({ createdAt: -1 })
+      .limit(5),
+  ])
+
+  const upcomingEvents = events.filter((e) => new Date(e.date) >= todayStart && e.status !== 'ended').length
+  const publishedEvents = events.filter((e) => e.status === 'published' && new Date(e.date) >= todayStart).length
+  const endedEvents = events.filter((e) => e.status === 'ended' || new Date(e.date) < todayStart).length
+  const totalRegistrations = events.reduce((sum, e) => sum + (e.registrationCount || 0), 0)
+
+  return {
+    club,
+    metrics: {
+      totalMembers,
+      upcomingEvents,
+      publishedEvents,
+      endedEvents,
+      totalEvents: events.length,
+      totalRegistrations,
+      totalNotices,
+    },
+    events: events.slice(0, 10),
+    recentMembers: recentMembers.map((m) => ({
+      _id: m._id,
+      id: m._id,
+      role: m.role,
+      status: m.status,
+      joinedAt: m.joinedAt || m.createdAt,
+      user: m.user,
+    })),
+    recentNotices: recentNotices.map((n) => ({
+      _id: n._id,
+      id: n._id,
+      title: n.title,
+      description: n.description,
+      category: n.category,
+      status: n.status,
+      important: n.important,
+      publishedAt: n.publishedAt || n.createdAt,
+      createdAt: n.createdAt,
+    })),
+  }
 }
 
 async function availableSlug(name, currentId = null) {
@@ -83,14 +153,14 @@ export async function createClub(data, user) {
 }
 
 export async function updateClub(identifier, data, user) {
-  const club = await Club.findOne(identifierFilter(identifier))
+  const club = await Club.findOne(identifierFilter(identifier, user))
   if (!club) throw new ApiError(404, 'Club not found')
   assertCanManage(user, club)
   const changes = { ...data }
   if (changes.name && changes.name !== club.name) changes.slug = await availableSlug(changes.name, club._id)
   delete changes.status
   Object.assign(club, changes)
-  if (user.role !== 'admin' && club.isModified()) {
+  if (user.role !== 'admin' && club.isModified() && club.status !== 'approved') {
     club.status = 'pending'
     club.verifiedBy = undefined
     club.verifiedAt = undefined
@@ -185,7 +255,7 @@ export async function joinClub(identifier, user) {
 }
 
 export async function listMembers(identifier, user, query) {
-  const club = await Club.findOne(identifierFilter(identifier))
+  const club = await Club.findOne(identifierFilter(identifier, user))
   if (!club) throw new ApiError(404, 'Club not found')
   assertCanManage(user, club)
   const { page, limit, skip } = getPagination(query)
@@ -198,7 +268,7 @@ export async function listMembers(identifier, user, query) {
 }
 
 export async function updateMember(identifier, membershipId, data, user) {
-  const club = await Club.findOne(identifierFilter(identifier))
+  const club = await Club.findOne(identifierFilter(identifier, user))
   if (!club) throw new ApiError(404, 'Club not found')
   assertCanManage(user, club)
   const membership = await Membership.findOne({ _id: membershipId, club: club._id })
@@ -239,7 +309,7 @@ export function removeMember(identifier, membershipId, user) {
 
 export async function replaceClubAsset(identifier, kind, file, user) {
   if (!file) throw new ApiError(400, `${kind} image is required`)
-  const club = await Club.findOne(identifierFilter(identifier))
+  const club = await Club.findOne(identifierFilter(identifier, user))
   if (!club) throw new ApiError(404, 'Club not found')
   assertCanManage(user, club)
   const previous = club[kind]?.toObject?.() || club[kind]

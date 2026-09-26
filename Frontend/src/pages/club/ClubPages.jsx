@@ -77,9 +77,8 @@ const ACCENT_COLORS = [
 export function ClubDashboard() {
   const { user, updateUser } = useAuth()
   const { toast } = useToast()
-  const { data: eventsRaw, loading: eventsLoading } = useApi('/events', { params: { mine: 'true', limit: 10 } })
-  const { data: membersRaw } = useApi(user?.club ? `/clubs/${user.club}/members` : null)
-  const { data: clubRaw, loading: clubLoading, refetch: refetchClub } = useApi(user?.club ? `/clubs/${user.club}` : null)
+  const clubTarget = user?.club || 'mine'
+  const { data: dashData, loading, refetch: refetchDash } = useApi(`/clubs/${clubTarget}/dashboard`)
 
   const [editModal, setEditModal] = useState(false)
   const [savingClub, setSavingClub] = useState(false)
@@ -91,8 +90,9 @@ export function ClubDashboard() {
   const bannerInputRef = useRef(null)
   const logoInputRef = useRef(null)
 
-  const c = clubRaw || {}
-  const events = (eventsRaw || []).map((e) => ({
+  const c = dashData?.club || {}
+  const metrics = dashData?.metrics || {}
+  const events = (dashData?.events || []).map((e) => ({
     ...e,
     id: e._id,
     day: day(e.date),
@@ -101,11 +101,14 @@ export function ClubDashboard() {
     registrations: e.registrationCount || 0,
     status: getEventAutomatedStatus(e),
   }))
-  const memberCount = membersRaw?.length || 0
+  const recentMembers = dashData?.recentMembers || []
+  const recentNotices = dashData?.recentNotices || []
+  const memberCount = metrics.totalMembers ?? c.memberCount ?? 0
 
   const handleBannerUpload = async (e) => {
     const file = e.target.files?.[0]
-    if (!file || !user?.club) return
+    const targetClubId = c._id || user?.club
+    if (!file || !targetClubId) return
     if (file.size > 5 * 1024 * 1024) {
       toast('Banner image must be less than 5MB')
       return
@@ -115,9 +118,9 @@ export function ClubDashboard() {
     formData.append('banner', file)
     setUploadingBanner(true)
     try {
-      await api.post(`/clubs/${user.club}/banner`, formData)
+      await api.post(`/clubs/${targetClubId}/banner`, formData)
       toast('Club banner uploaded and saved to Cloudinary!')
-      refetchClub()
+      refetchDash()
     } catch (err) {
       toast(err.message || 'Failed to upload banner')
     } finally {
@@ -128,7 +131,8 @@ export function ClubDashboard() {
 
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0]
-    if (!file || !user?.club) return
+    const targetClubId = c._id || user?.club
+    if (!file || !targetClubId) return
     if (file.size > 5 * 1024 * 1024) {
       toast('Logo image must be less than 5MB')
       return
@@ -138,10 +142,10 @@ export function ClubDashboard() {
     formData.append('logo', file)
     setUploadingLogo(true)
     try {
-      const res = await api.post(`/clubs/${user.club}/logo`, formData)
+      const res = await api.post(`/clubs/${targetClubId}/logo`, formData)
       toast('Club logo uploaded to Cloudinary successfully!')
       if (updateUser) updateUser({ profileImage: res.data?.logo || res.data })
-      refetchClub()
+      refetchDash()
     } catch (err) {
       toast(err.message || 'Failed to upload logo')
     } finally {
@@ -152,7 +156,8 @@ export function ClubDashboard() {
 
   const handleSaveClub = async (e) => {
     e.preventDefault()
-    if (!user?.club) return
+    const targetClubId = c._id || user?.club
+    if (!targetClubId) return
     const form = new FormData(e.currentTarget)
     const payload = {
       name: form.get('name')?.toString().trim(),
@@ -166,9 +171,9 @@ export function ClubDashboard() {
 
     setSavingClub(true)
     try {
-      await api.put(`/clubs/${user.club}`, payload)
+      await api.put(`/clubs/${targetClubId}`, payload)
       toast('Club details updated successfully!')
-      refetchClub()
+      refetchDash()
       setEditModal(false)
     } catch (err) {
       toast(err.message || 'Failed to update club details')
@@ -182,7 +187,7 @@ export function ClubDashboard() {
     setEditModal(true)
   }
 
-  if (eventsLoading || clubLoading) return <LoadingState />
+  if (loading && !dashData) return <LoadingState />
 
   return (
     <>
@@ -404,9 +409,24 @@ export function ClubDashboard() {
       {/* Stats Grid */}
       <div className="stats-grid">
         <StatCard icon={Users} label="Total members" value={String(memberCount)} detail="Active members" />
-        <StatCard icon={CalendarDays} label="Upcoming events" value={String(events.length).padStart(2, '0')} detail={`${events.filter((e) => e.status === 'Published').length} published`} />
-        <StatCard icon={ClipboardCheck} label="Registrations" value={String(events.reduce((s, e) => s + e.registrations, 0))} detail="Across all events" />
-        <StatCard icon={Megaphone} label="Announcements" value="1" detail="Campus notices" />
+        <StatCard
+          icon={CalendarDays}
+          label="Upcoming events"
+          value={String(metrics.upcomingEvents ?? events.filter((e) => e.status === 'Published').length).padStart(2, '0')}
+          detail={`${metrics.totalEvents ?? events.length} total listings`}
+        />
+        <StatCard
+          icon={ClipboardCheck}
+          label="Registrations"
+          value={String(metrics.totalRegistrations ?? events.reduce((s, e) => s + e.registrations, 0))}
+          detail="Across all events"
+        />
+        <StatCard
+          icon={Megaphone}
+          label="Announcements"
+          value={String(metrics.totalNotices ?? recentNotices.length)}
+          detail="Campus notices"
+        />
       </div>
 
       <div className="dashboard-columns org-dashboard">
@@ -516,9 +536,9 @@ export function ClubDashboard() {
                 padding: '16px 18px',
               }}
             >
-              {membersRaw?.length ? (
+              {recentMembers.length ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {membersRaw.slice(0, 3).map((m) => (
+                  {recentMembers.slice(0, 4).map((m) => (
                     <div
                       key={m._id || m.id}
                       style={{
@@ -530,18 +550,18 @@ export function ClubDashboard() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Avatar name={m.user?.name || m.name} src={m.user?.profileImage} size="md" />
+                        <Avatar name={m.user?.name || 'Member'} src={m.user?.profileImage} size="md" />
                         <div>
                           <strong style={{ fontSize: 13, color: '#fff', display: 'block' }}>
-                            {m.user?.name || m.name || 'Student Member'}
+                            {m.user?.name || 'Student Member'}
                           </strong>
                           <small style={{ color: '#888894', fontSize: 11 }}>
-                            {m.user?.department || m.department || 'Department'} &bull; {m.role || 'Member'}
+                            {m.user?.department || 'Department'} &bull; {m.role || 'Member'} {m.user?.studentId ? `(${m.user.studentId})` : ''}
                           </small>
                         </div>
                       </div>
-                      <Badge tone={m.status === 'active' ? 'green' : 'amber'}>
-                        {m.status === 'active' ? 'Active' : 'Pending'}
+                      <Badge tone={m.status === 'approved' || m.status === 'active' ? 'green' : 'amber'}>
+                        {m.status === 'approved' || m.status === 'active' ? 'Active' : 'Pending'}
                       </Badge>
                     </div>
                   ))}
@@ -549,7 +569,7 @@ export function ClubDashboard() {
               ) : (
                 <div style={{ textAlign: 'center', padding: '20px 10px', color: '#888894' }}>
                   <Users size={24} style={{ margin: '0 auto 8px', color: 'var(--accent)' }} />
-                  <p style={{ margin: 0, fontSize: 13 }}>{memberCount} active member registered in this club.</p>
+                  <p style={{ margin: 0, fontSize: 13 }}>No student members yet. Students can join from your public club page.</p>
                 </div>
               )}
             </div>
@@ -609,25 +629,40 @@ export function ClubDashboard() {
                 </Link>
               </div>
 
-              <div
-                style={{
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 8,
-                  padding: 12,
-                  background: '#12121a',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Badge tone="amber">Club Notice</Badge>
-                  <small style={{ color: '#686874', fontSize: 10 }}>Recently</small>
+              {recentNotices.length > 0 ? (
+                recentNotices.map((n) => (
+                  <div
+                    key={n._id || n.id}
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 8,
+                      padding: 12,
+                      background: '#12121a',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Badge tone={n.important ? 'amber' : 'neutral'}>
+                        {n.category || 'Announcement'}
+                      </Badge>
+                      <small style={{ color: '#686874', fontSize: 10 }}>{fmt(n.publishedAt || n.createdAt)}</small>
+                    </div>
+                    <strong style={{ fontSize: 13, color: '#eee', display: 'block', marginTop: 6 }}>
+                      {n.title}
+                    </strong>
+                    <p style={{ fontSize: 11, color: '#888894', margin: '4px 0 0', lineHeight: 1.5 }}>
+                      {n.description}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '20px 10px', color: '#888894' }}>
+                  <Megaphone size={22} style={{ margin: '0 auto 8px', color: 'var(--accent)' }} />
+                  <p style={{ margin: 0, fontSize: 13 }}>No announcements posted yet.</p>
+                  <Link to="/club/announcements" style={{ marginTop: 8, display: 'inline-block' }}>
+                    <Button variant="secondary" style={{ minHeight: 30, fontSize: 11 }}>Post first notice</Button>
+                  </Link>
                 </div>
-                <strong style={{ fontSize: 13, color: '#eee', display: 'block', marginTop: 6 }}>
-                  Welcome to {c.name || 'the club'}
-                </strong>
-                <p style={{ fontSize: 11, color: '#888894', margin: '4px 0 0', lineHeight: 1.5 }}>
-                  Check out our upcoming workshops, sessions, and events on CampusHub.
-                </p>
-              </div>
+              )}
             </div>
           </div>
         </section>

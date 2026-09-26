@@ -18,6 +18,13 @@ const router = Router()
 
 router.get('/', optionalAuthenticate, validate({ query: clubQuerySchema }), asyncHandler(controller.list))
 router.post('/', authenticate, requireRole('club', 'admin'), validate({ body: createClubSchema }), asyncHandler(controller.create))
+router.get(
+  '/:id/dashboard',
+  authenticate,
+  requireRole('club', 'admin'),
+  validate({ params: idParams }),
+  asyncHandler(controller.dashboard),
+)
 router.post('/:id/join', authenticate, requireRole('student'), validate({ params: idParams }), asyncHandler(controller.join))
 router.get(
   '/:id/members',
