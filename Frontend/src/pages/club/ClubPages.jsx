@@ -22,6 +22,9 @@ import {
   Palette,
   Check,
   Download,
+  Mail,
+  GraduationCap,
+  UserMinus,
 } from 'lucide-react'
 import PageHeader from '../../components/layout/PageHeader'
 import StatCard from '../../components/dashboard/StatCard'
@@ -1431,6 +1434,260 @@ export function ClubAnnouncements(){
   return <><PageHeader eyebrow="Community updates" title="Announcements" description="Keep members informed with clear, timely updates."/><div className="announcement-layout"><form className="settings-card" onSubmit={submit}><h2>Post an announcement</h2><Input label="Title" name="title" required minLength={2}/><label className="field"><span>Content</span><textarea name="content" rows="6" required minLength={2} placeholder="Write your announcement content here..."/></label><div className="form-grid"><label className="field"><span>Priority</span><select name="priority"><option>Normal</option><option>Important</option><option>Urgent</option></select></label><Input label="Publish date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required/></div><Button type="submit" disabled={submitting}>{submitting ? 'Publishing…' : <><Send size={17}/> Publish announcement</>}</Button></form><section><div className="section-head"><h2>Previous announcements</h2><span>{items.length} total</span></div><div className="announcement-list">{items.map(n=><article key={n.id}><Badge tone={n.important?'amber':'neutral'}>{n.category}</Badge><h3>{n.title}</h3><p>{n.description}</p><time>{n.date}</time></article>)}</div></section></div></>
 }
 
-export function ClubMembers(){const {user}=useAuth();const {data:raw,loading}=useApi(user?.club?`/clubs/${user.club}/members`:null);const [q,setQ]=useState(''),[role,setRole]=useState('All');const members=(raw||[]).map(m=>({id:m._id,name:m.user?.name||'Member',department:m.user?.department||'—',clubRole:m.role==='president'?'President':m.role==='executive'?'Executive':'Member',joinDate:fmt(m.joinedAt||m.createdAt)}));const list=useMemo(()=>members.filter(m=>(role==='All'||m.clubRole===role)&&(m.name+m.id+m.department).toLowerCase().includes(q.toLowerCase())),[members,q,role]);if(loading)return <LoadingState/>;return <><PageHeader eyebrow="Community" title="Club members" description={`${members.length} members across leadership and general roles.`}/><div className="list-toolbar"><SearchBar value={q} onChange={setQ} placeholder="Search members…"/><label className="select-inline"><span className="sr-only">Filter by role</span><select value={role} onChange={e=>setRole(e.target.value)}><option>All</option><option>President</option><option>Executive</option><option>Member</option></select></label></div><div className="member-list">{list.map(m=><article key={m.id}><Avatar name={m.name}/><div><strong>{m.name}</strong><span>{m.department}</span></div><Badge>{m.clubRole}</Badge><span>{m.joinDate}</span><button aria-label={`View ${m.name}`}><ArrowRight/></button></article>)}</div></>}
+export function ClubMembers() {
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const clubId = typeof user?.club === 'object' ? user.club?._id : user?.club
+  const { data: raw, loading, refetch } = useApi(clubId ? `/clubs/${clubId}/members` : null)
+  const [q, setQ] = useState('')
+  const [role, setRole] = useState('All')
+  const [selectedMember, setSelectedMember] = useState(null)
+  const [removeTarget, setRemoveTarget] = useState(null)
+  const [updatingRole, setUpdatingRole] = useState(false)
+  const [removing, setRemoving] = useState(false)
+
+  const members = (Array.isArray(raw) ? raw : raw?.items || []).map((m) => {
+    const u = m.user || {}
+    return {
+      id: m._id,
+      userId: u._id,
+      name: u.name || 'Member',
+      email: u.email || '—',
+      studentId: u.studentId || '—',
+      department: u.department || '—',
+      batch: u.batch || '',
+      avatar: u.profileImage?.url || u.profileImage?.imageUrl || u.profileImage,
+      role: m.role || 'member',
+      clubRole: m.role === 'president' ? 'President' : m.role === 'executive' ? 'Executive' : 'Member',
+      status: m.status || 'approved',
+      joinDate: fmt(m.joinedAt || m.createdAt),
+    }
+  })
+
+  const list = useMemo(() => {
+    return members.filter((m) => {
+      const matchRole = role === 'All' || m.clubRole === role
+      const searchTarget = `${m.name} ${m.email} ${m.studentId} ${m.department}`.toLowerCase()
+      const matchQuery = searchTarget.includes(q.toLowerCase())
+      return matchRole && matchQuery
+    })
+  }, [members, q, role])
+
+  const handleRoleChange = async (member, newRole) => {
+    if (!clubId) return
+    setUpdatingRole(true)
+    try {
+      await api.patch(`/clubs/${clubId}/members/${member.id}`, { role: newRole })
+      toast(`${member.name}'s role updated to ${newRole}`)
+      if (selectedMember && selectedMember.id === member.id) {
+        setSelectedMember({
+          ...selectedMember,
+          role: newRole,
+          clubRole: newRole === 'president' ? 'President' : newRole === 'executive' ? 'Executive' : 'Member',
+        })
+      }
+      refetch()
+    } catch (err) {
+      toast(err.message || 'Failed to update member role')
+    } finally {
+      setUpdatingRole(false)
+    }
+  }
+
+  const handleRemoveMember = async () => {
+    if (!removeTarget || !clubId) return
+    setRemoving(true)
+    try {
+      await api.delete(`/clubs/${clubId}/members/${removeTarget.id}`)
+      toast(`${removeTarget.name} has been removed from the club`)
+      if (selectedMember && selectedMember.id === removeTarget.id) {
+        setSelectedMember(null)
+      }
+      refetch()
+    } catch (err) {
+      toast(err.message || 'Failed to remove member')
+    } finally {
+      setRemoving(false)
+      setRemoveTarget(null)
+    }
+  }
+
+  if (loading && !raw) return <LoadingState />
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Community"
+        title="Club members"
+        description={`${members.length} member${members.length === 1 ? '' : 's'} across leadership and general roles.`}
+      />
+
+      <div className="list-toolbar">
+        <SearchBar value={q} onChange={setQ} placeholder="Search by name, student ID, department, or email…" />
+        <label className="select-inline">
+          <span className="sr-only">Filter by role</span>
+          <select value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="All">All Roles</option>
+            <option value="President">President</option>
+            <option value="Executive">Executive</option>
+            <option value="Member">Member</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="member-list">
+        {list.length > 0 ? (
+          list.map((m) => (
+            <article key={m.id} style={{ gridTemplateColumns: '44px minmax(220px, 2fr) auto auto auto', gap: 14 }}>
+              <Avatar name={m.name} src={m.avatar} />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <strong style={{ fontSize: 13, color: '#f3f3f6' }}>{m.name}</strong>
+                  {m.studentId !== '—' && (
+                    <span style={{ fontSize: 11, background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', padding: '1px 7px', borderRadius: 4, color: '#d1d1d6', fontFamily: 'monospace' }}>
+                      ID: {m.studentId}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 4, flexWrap: 'wrap', fontSize: 11, color: '#8d8d97' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <GraduationCap size={13} style={{ color: 'var(--accent)' }} />
+                    <span>Dept: <strong style={{ color: '#c4c4cc', fontWeight: 500 }}>{m.department}</strong></span>
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <Mail size={13} style={{ color: '#8d8d97' }} />
+                    <span style={{ color: '#aaaab3' }}>{m.email}</span>
+                  </span>
+                </div>
+              </div>
+
+              <Badge tone={m.clubRole === 'President' ? 'amber' : m.clubRole === 'Executive' ? 'blue' : 'neutral'}>
+                {m.clubRole}
+              </Badge>
+
+              <span style={{ fontSize: 11, color: '#8d8d97', whiteSpace: 'nowrap' }}>
+                Joined {m.joinDate}
+              </span>
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  onClick={() => setSelectedMember(m)}
+                  aria-label={`View ${m.name}`}
+                  title="View / Manage member"
+                  style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(255,255,255,0.05)', color: '#aaaab3', display: 'grid', placeItems: 'center', border: 'none', cursor: 'pointer' }}
+                >
+                  <Eye size={16} />
+                </button>
+                <button
+                  onClick={() => setRemoveTarget(m)}
+                  aria-label={`Remove ${m.name}`}
+                  title="Remove from club"
+                  style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(239,68,68,0.08)', color: '#ef4444', display: 'grid', placeItems: 'center', border: 'none', cursor: 'pointer' }}
+                >
+                  <UserMinus size={16} />
+                </button>
+              </div>
+            </article>
+          ))
+        ) : (
+          <div style={{ padding: '36px 16px', textAlign: 'center', color: '#777782', fontSize: 13 }}>
+            No members found matching your search.
+          </div>
+        )}
+      </div>
+
+      {/* Member Details & Role Modal */}
+      <Modal open={!!selectedMember} onClose={() => setSelectedMember(null)} title="Member Profile & Leadership Role">
+        {selectedMember && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <Avatar name={selectedMember.name} src={selectedMember.avatar} size="lg" />
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, color: '#f3f3f6' }}>{selectedMember.name}</h3>
+                <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                  <Badge tone={selectedMember.clubRole === 'President' ? 'amber' : selectedMember.clubRole === 'Executive' ? 'blue' : 'neutral'}>
+                    {selectedMember.clubRole}
+                  </Badge>
+                  <span style={{ fontSize: 11, color: '#8d8d97' }}>
+                    Member since {selectedMember.joinDate}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, display: 'grid', gridTemplateColumns: '130px 1fr', gap: '10px 14px', fontSize: 13 }}>
+              <span style={{ color: '#8d8d97' }}>Student ID:</span>
+              <strong style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>{selectedMember.studentId}</strong>
+
+              <span style={{ color: '#8d8d97' }}>Department:</span>
+              <strong>{selectedMember.department}</strong>
+
+              <span style={{ color: '#8d8d97' }}>Email Address:</span>
+              <span>{selectedMember.email}</span>
+
+              {selectedMember.batch && (
+                <>
+                  <span style={{ color: '#8d8d97' }}>Academic Batch:</span>
+                  <span>{selectedMember.batch}</span>
+                </>
+              )}
+
+              <span style={{ color: '#8d8d97' }}>Membership Status:</span>
+              <Badge tone="green">{selectedMember.status}</Badge>
+
+              <span style={{ color: '#8d8d97', alignSelf: 'center' }}>Change Role:</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <select
+                  value={selectedMember.role}
+                  disabled={updatingRole}
+                  onChange={(e) => handleRoleChange(selectedMember, e.target.value)}
+                  style={{
+                    background: '#181820',
+                    border: '1px solid var(--border)',
+                    borderRadius: 7,
+                    color: '#f3f3f6',
+                    padding: '6px 10px',
+                    fontSize: 13,
+                  }}
+                >
+                  <option value="member">General Member</option>
+                  <option value="executive">Executive Member</option>
+                  <option value="president">Club President</option>
+                </select>
+                {updatingRole && <span style={{ fontSize: 11, color: '#8d8d97' }}>Saving…</span>}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const m = selectedMember
+                  setSelectedMember(null)
+                  setRemoveTarget(m)
+                }}
+                style={{ color: '#ef4444' }}
+              >
+                <UserMinus size={16} /> Remove Member
+              </Button>
+              <Button onClick={() => setSelectedMember(null)}>Done</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Remove Member Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={handleRemoveMember}
+        title={`Remove ${removeTarget?.name} from club?`}
+        message="This member will be unlinked from the club and will no longer appear on your membership roster."
+        confirmLabel={removing ? 'Removing…' : 'Remove member'}
+        danger
+      />
+    </>
+  )
+}
 
 export function ClubSettings(){return <SettingsPage title="Organization settings" sections={['Public organization profile','Membership notifications','Event registration alerts','Executive permissions','Weekly activity summary']}/>}
