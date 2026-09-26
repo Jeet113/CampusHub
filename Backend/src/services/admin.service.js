@@ -17,18 +17,166 @@ const modelConfig = {
   notice: { Model: Notice, approved: 'published', pending: 'pending', rejected: 'rejected' },
 }
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 export async function getMetrics() {
-  const [users, activeUsers, clubs, approvedClubs, events, publishedEvents, registrations, notices] = await Promise.all([
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  const [
+    users,
+    activeUsers,
+    studentCount,
+    recentStudents,
+    clubs,
+    approvedClubs,
+    pendingClubs,
+    suspendedClubs,
+    events,
+    publishedEvents,
+    pendingEvents,
+    registrations,
+    publishedNotices,
+    pendingNotices,
+    recentUsers,
+  ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ status: 'active' }),
+    User.countDocuments({ role: 'student' }),
+    User.countDocuments({ role: 'student', createdAt: { $gte: thirtyDaysAgo } }),
     Club.countDocuments(),
     Club.countDocuments({ status: 'approved' }),
+    Club.countDocuments({ status: 'pending' }),
+    Club.countDocuments({ status: 'suspended' }),
     Event.countDocuments(),
     Event.countDocuments({ status: 'published' }),
+    Event.countDocuments({ status: 'pending' }),
     EventRegistration.countDocuments({ status: { $in: ['registered', 'attended'] } }),
     Notice.countDocuments({ status: 'published' }),
+    Notice.countDocuments({ status: 'pending' }),
+    User.find()
+      .select('-refreshTokenHash -passwordResetTokenHash')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate('club', 'name slug logo initials accent'),
   ])
-  return { users, activeUsers, clubs, approvedClubs, events, publishedEvents, registrations, publishedNotices: notices }
+
+  // Generate 6-month campus activity trend
+  const months = []
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const now = new Date()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const start = new Date(d.getFullYear(), d.getMonth(), 1)
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
+    months.push({
+      month: monthNames[d.getMonth()],
+      start,
+      end,
+    })
+  }
+
+  const activityMonthly = await Promise.all(
+    months.map(async (m) => {
+      const [regs, evts, usrs] = await Promise.all([
+        EventRegistration.countDocuments({ createdAt: { $gte: m.start, $lte: m.end } }),
+        Event.countDocuments({ createdAt: { $gte: m.start, $lte: m.end } }),
+        User.countDocuments({ createdAt: { $gte: m.start, $lte: m.end } }),
+      ])
+      return {
+        month: m.month,
+        registrations: regs,
+        events: evts,
+        users: usrs,
+        total: regs * 5 + evts * 10 + usrs * 2,
+      }
+    }),
+  )
+
+  const pendingApprovals = pendingClubs + pendingEvents + pendingNotices
+
+  return {
+    users,
+    activeUsers,
+    studentCount,
+    recentStudents,
+    clubCount: clubs,
+    clubs,
+    approvedClubs,
+    pendingClubs,
+    suspendedClubs,
+    eventCount: events,
+    events,
+    publishedEvents,
+    pendingEvents,
+    registrations,
+    publishedNotices,
+    pendingNotices,
+    pendingApprovals,
+    recentUsers,
+    activity: activityMonthly,
+  }
+}
+
+export async function listUsers(query = {}) {
+  const page = Math.max(1, parseInt(query.page, 10) || 1)
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 50))
+  const skip = (page - 1) * limit
+
+  const filter = {}
+  if (query.role && ['student', 'club', 'admin'].includes(query.role)) {
+    filter.role = query.role
+  }
+  if (query.status && ['active', 'suspended'].includes(query.status)) {
+    filter.status = query.status
+  }
+  if (query.search) {
+    const search = new RegExp(escapeRegex(query.search), 'i')
+    filter.$or = [{ name: search }, { email: search }, { studentId: search }, { department: search }]
+  }
+
+  const sort =
+    query.sort === 'oldest'
+      ? { createdAt: 1 }
+      : query.sort === 'name'
+        ? { name: 1 }
+        : { createdAt: -1 }
+
+  const [items, total] = await Promise.all([
+    User.find(filter)
+      .select('-refreshTokenHash -passwordResetTokenHash')
+      .populate('club', 'name slug logo initials accent')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments(filter),
+  ])
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit) || 1,
+    },
+  }
+}
+
+export async function getUserDetails(id) {
+  const user = await User.findById(id)
+    .select('-refreshTokenHash -passwordResetTokenHash')
+    .populate('club', 'name slug logo initials accent')
+  if (!user) throw new ApiError(404, 'User not found')
+
+  const [registrationsCount, membershipsCount] = await Promise.all([
+    EventRegistration.countDocuments({ student: user._id }),
+    Membership.countDocuments({ user: user._id }),
+  ])
+
+  return {
+    ...user.toJSON(),
+    registrationsCount,
+    membershipsCount,
+  }
 }
 
 export async function getApprovals() {

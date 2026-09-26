@@ -37,10 +37,13 @@ export async function listClubs(query, user) {
   const { page, limit, skip } = getPagination(query)
   const filter = {}
   const privileged = user?.role === 'admin'
-  if (privileged && query.status) filter.status = query.status
-  else if (user?.role === 'club' && query.status) {
+  if (privileged) {
+    if (query.status) filter.status = query.status
+  } else if (user?.role === 'club' && query.status) {
     filter.$or = [{ status: { $ne: 'suspended' } }, { _id: user.club }]
-  } else filter.status = { $ne: 'suspended' }
+  } else {
+    filter.status = { $ne: 'suspended' }
+  }
   if (query.category) filter.category = query.category
   if (query.search) {
     const search = new RegExp(escapeRegex(query.search), 'i')

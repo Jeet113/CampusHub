@@ -17,6 +17,8 @@ const router = Router()
 router.use(authenticate, requireRole('admin'))
 
 router.get('/metrics', asyncHandler(controller.metrics))
+router.get('/users', asyncHandler(controller.users))
+router.get('/users/:id', validate({ params: idParams }), asyncHandler(controller.getUser))
 router.get('/approvals', asyncHandler(controller.approvals))
 router.post('/approvals/:id/approve', validate({ params: idParams, body: approvalSchema }), asyncHandler(controller.approve))
 router.post('/approvals/:id/reject', validate({ params: idParams, body: approvalSchema }), asyncHandler(controller.reject))

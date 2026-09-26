@@ -4,6 +4,8 @@ import {
   deleteUser,
   getApprovals,
   getMetrics,
+  getUserDetails,
+  listUsers,
   resolveApproval,
   seedClub as seedClubService,
   setClubStatus,
@@ -13,6 +15,15 @@ import {
 
 export async function metrics(_request, response) {
   return response.json(new ApiResponse(await getMetrics(), 'Admin metrics retrieved'))
+}
+
+export async function users(request, response) {
+  const result = await listUsers(input(request, 'query'))
+  return response.json(new ApiResponse(result.items, 'Users retrieved', { pagination: result.pagination }))
+}
+
+export async function getUser(request, response) {
+  return response.json(new ApiResponse(await getUserDetails(input(request, 'params').id), 'User details retrieved'))
 }
 
 export async function approvals(_request, response) {
