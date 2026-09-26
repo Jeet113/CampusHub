@@ -56,7 +56,7 @@ export const users = [
  {name:'Mahin Islam',id:'1904076',email:'mahin@cuet.ac.bd',role:'Student',department:'Computer Science & Engineering',status:'Suspended',joined:'Jun 2022'},
  {name:'IEEE CS CUET',id:'ORG-012',email:'club@campushub.local',role:'Club Organization',department:'Registered Organization',status:'Active',joined:'Jan 2021'},
  {name:'CUET Robotics',id:'ORG-017',email:'robotics@cuet.ac.bd',role:'Club Organization',department:'Registered Organization',status:'Active',joined:'Mar 2022'},
- {name:'Samira Khan',id:'ADM-03',email:'admin@campushub.local',role:'Admin',department:'Student Affairs',status:'Active',joined:'Jan 2020'},
+ {name:'Samira Khan',id:'ADM-03',email:'admin@campushub.local',role:'Admin',department:'Student Affairs',status:'Active',joined:'Jan 2020',profileImage:'/admin-avatar.png'},
  {name:'Rafi Ahmed',id:'2003032',email:'rafi@cuet.ac.bd',role:'Student',department:'Electrical & Electronic Engineering',status:'Active',joined:'Aug 2023'},
  {name:'Mehnaz Karim',id:'2106011',email:'mehnaz@cuet.ac.bd',role:'Student',department:'Architecture',status:'Active',joined:'Aug 2024'}
 ]
@@ -66,5 +66,5 @@ export const members = users.filter(u=>u.role==='Student').map((u,i)=>({...u, jo
 export const credentials = {
  student:{email:'student@campushub.local',password:'student123',name:'Jeet Saha'},
  club:{email:'carrerclub@cuet.ac.bd',password:'carrerclub123',name:'CUET Carrer Club'},
- admin:{email:'admin@campushub.local',password:'admin123',name:'Samira Khan'}
+ admin:{email:'admin@campushub.local',password:'admin123',name:'Samira Khan',profileImage:'/admin-avatar.png'}
 }

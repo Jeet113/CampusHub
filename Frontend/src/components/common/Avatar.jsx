@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getAssetUrl } from '../../services/api.js'
 
-export default function Avatar({ name = 'CampusHub', size = 'md', color, src }) {
+export default function Avatar({ name = 'CampusHub', size = 'md', color, src, role }) {
   const [imgError, setImgError] = useState(false)
   const initials = (name || 'CH')
     .split(' ')
@@ -11,7 +11,9 @@ export default function Avatar({ name = 'CampusHub', size = 'md', color, src }) 
     .join('')
     .toUpperCase()
 
-  const imageUrl = getAssetUrl(src)
+  const isAdmin = role === 'admin' || (typeof name === 'string' && (name.toLowerCase().includes('administrator') || name.toLowerCase() === 'admin'))
+  const effectiveSrc = src || (isAdmin ? '/admin-avatar.png' : null)
+  const imageUrl = getAssetUrl(effectiveSrc)
 
   if (imageUrl && !imgError) {
     return (
@@ -20,7 +22,7 @@ export default function Avatar({ name = 'CampusHub', size = 'md', color, src }) 
           src={imageUrl}
           alt={name}
           onError={() => setImgError(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit', display: 'block' }}
         />
       </span>
     )

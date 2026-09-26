@@ -84,6 +84,9 @@ async function seed() {
     role: 'admin',
     studentId: 'ADM-001',
     department: 'Student Affairs',
+    profileImage: {
+      url: '/admin-avatar.png',
+    },
   })
   const clubUsers = []
   for (const [name, email, studentId] of clubProfiles) {

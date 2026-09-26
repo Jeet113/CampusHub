@@ -5,6 +5,9 @@ import { uploadBuffer, safelyDeleteAsset } from './cloudinary.service.js'
 export async function getProfile(userId) {
   const user = await User.findById(userId).populate('club', 'name slug status logo')
   if (!user) throw new ApiError(404, 'User not found')
+  if (user.role === 'admin' && !user.profileImage?.url) {
+    user.profileImage = { url: '/admin-avatar.png' }
+  }
   return user
 }
 

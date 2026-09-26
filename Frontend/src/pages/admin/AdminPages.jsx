@@ -35,6 +35,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog'
 import LoadingState from '../../components/common/LoadingState'
 import { useToast } from '../../components/common/Toast'
 import { useApi } from '../../hooks/useApi'
+import { useAuth } from '../../hooks/useAuth'
 import { api, getAssetUrl } from '../../services/api'
 import { SettingsPage } from '../student/StudentPages'
 import { getEventAutomatedStatus } from '../../utils/eventStatus'
@@ -51,6 +52,7 @@ function day(d) {
 }
 
 export function AdminDashboard() {
+  const { user } = useAuth()
   const { data: metrics, loading: metricsLoading, refetch: refetchMetrics } = useApi('/admin/metrics')
   const { data: eventsRaw, loading: eventsLoading } = useApi('/events', { params: { limit: 5 } })
   const { data: approvalData, loading: approvalsLoading, refetch: refetchApprovals } = useApi('/admin/approvals')
@@ -160,6 +162,29 @@ export function AdminDashboard() {
         eyebrow="Platform control"
         title="Admin Dashboard"
         description="A clear view of CampusHub operations, pending moderation work, and system statistics."
+        actions={
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '6px 14px 6px 8px',
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <Avatar name={user?.name || 'CampusHub Administrator'} src="/admin-avatar.png" role="admin" size="md" />
+            <div style={{ textAlign: 'left', lineHeight: 1.25 }}>
+              <strong style={{ fontSize: 13, color: '#f3f3f6', display: 'block' }}>
+                {user?.name || 'Administrator'}
+              </strong>
+              <small style={{ color: 'var(--accent)', fontSize: 11, fontWeight: 500 }}>
+                Super Admin &bull; {user?.department || 'Student Affairs'}
+              </small>
+            </div>
+          </div>
+        }
       />
 
       <div className="stats-grid">
@@ -492,7 +517,7 @@ export function AdminUsers() {
           filteredUsers.map((u) => (
             <article key={u.id}>
               <div className="table-title">
-                <Avatar name={u.name} src={u.profileImage?.url || u.profileImage?.imageUrl} />
+                <Avatar name={u.name} src={u.profileImage?.url || u.profileImage?.imageUrl} role={u.role} />
                 <span>
                   <strong>{u.name}</strong>
                   <small>Joined {u.joined}</small>
@@ -552,7 +577,7 @@ export function AdminUsers() {
         {selectedUser && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <Avatar name={selectedUser.name} src={selectedUser.profileImage?.url || selectedUser.profileImage?.imageUrl} size="lg" />
+              <Avatar name={selectedUser.name} src={selectedUser.profileImage?.url || selectedUser.profileImage?.imageUrl} role={selectedUser.role} size="lg" />
               <div>
                 <h3 style={{ margin: 0, fontSize: 18, color: '#f3f3f6' }}>{selectedUser.name}</h3>
                 <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>

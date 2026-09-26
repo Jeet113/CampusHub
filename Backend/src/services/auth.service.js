@@ -51,6 +51,8 @@ export async function loginUser(data) {
     if (linkedClub?.logo?.url) {
       user.profileImage = linkedClub.logo
     }
+  } else if (user.role === 'admin' && !user.profileImage?.url) {
+    user.profileImage = { url: '/admin-avatar.png' }
   }
   const tokens = await issueTokens(user)
   return { user: user.toJSON(), ...tokens }
@@ -69,6 +71,8 @@ export async function rotateRefreshToken(token) {
     if (linkedClub?.logo?.url) {
       user.profileImage = linkedClub.logo
     }
+  } else if (user.role === 'admin' && !user.profileImage?.url) {
+    user.profileImage = { url: '/admin-avatar.png' }
   }
   const tokens = await issueTokens(user)
   return { user: user.toJSON(), ...tokens }

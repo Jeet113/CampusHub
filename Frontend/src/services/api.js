@@ -20,9 +20,15 @@ export function getAssetUrl(asset) {
   const url = typeof asset === 'string' ? asset : (asset.imageUrl || asset.url)
   if (!url) return null
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
+  if (url.startsWith('/uploads')) {
+    const base = API_URL.replace(/\/api\/v1\/?$/, '')
+    return `${base}${url}`
+  }
+  if (url.startsWith('/')) return url
   const base = API_URL.replace(/\/api\/v1\/?$/, '')
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return `${base}/${url}`
 }
+
 
 async function parseResponse(response) {
   const contentType = response.headers.get('content-type') || ''

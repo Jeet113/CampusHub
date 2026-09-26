@@ -17,7 +17,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const { user } = useAuth()
 
-  const userAvatar = user?.profileImage || user?.club?.logo
+  const userAvatar = user?.profileImage || (user?.role === 'admin' ? '/admin-avatar.png' : user?.club?.logo)
   const dashboardPath = user ? `/${user.role}/dashboard` : '/login'
   const roleLabel = user?.role === 'club' ? 'Organization' : user?.role
 
@@ -52,7 +52,7 @@ export default function Navbar() {
                 }}
                 title={`Logged in as ${user.name} (${roleLabel})`}
               >
-                <Avatar name={user.name} src={userAvatar} size="sm" />
+                <Avatar name={user.name} src={userAvatar} role={user.role} size="sm" />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
                   <strong style={{ fontSize: 13, color: '#f3f3f6', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {user.name}
@@ -104,7 +104,7 @@ export default function Navbar() {
               className="mobile-primary"
               style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}
             >
-              <Avatar name={user.name} src={userAvatar} size="sm" />
+              <Avatar name={user.name} src={userAvatar} role={user.role} size="sm" />
               <span>Dashboard ({user.name})</span>
             </Link>
           ) : (
