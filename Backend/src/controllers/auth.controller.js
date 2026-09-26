@@ -33,7 +33,12 @@ function sendAuth(response, status, result, message) {
   response.cookie('refreshToken', result.refreshToken, cookieOptions(result.refreshToken))
   return response.status(status).json(
     new ApiResponse(
-      { user: result.user, accessToken: result.accessToken, ...(result.club ? { club: result.club } : {}) },
+      {
+        user: result.user,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        ...(result.club ? { club: result.club } : {}),
+      },
       message,
     ),
   )

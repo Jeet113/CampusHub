@@ -1503,18 +1503,36 @@ export function CreateEvent() {
 }
 
 export function ClubAnnouncements(){
-  const {data:raw,loading,refetch,setData}=useApi('/notices');
+  const { user } = useAuth();
+  const [scope, setScope] = useState('mine');
+  const { data: raw, loading, refetch, setData } = useApi('/notices', {
+    params: scope === 'mine' ? { mine: 'true' } : {}
+  });
   const [submitting, setSubmitting] = useState(false);
-  const items=(raw||[]).map(n=>({...n,id:n._id || n.id || Math.random(),date:fmt(n.publishedAt||n.createdAt)}));
-  const {toast}=useToast();
-  
-  const submit=async e=>{
+  const [formKey, setFormKey] = useState(0);
+  const { toast } = useToast();
+
+  const currentUserId = user?._id || user?.id;
+
+  const items = (raw || []).map((n) => {
+    const authorId = typeof n.author === 'object' ? n.author?._id : n.author;
+    const isMine = String(authorId) === String(currentUserId);
+    return {
+      ...n,
+      id: n._id || n.id || Math.random(),
+      date: fmt(n.publishedAt || n.createdAt),
+      isMine,
+    };
+  });
+
+  const submit = async (e) => {
     e.preventDefault();
-    const f=new FormData(e.currentTarget);
+    const f = new FormData(e.currentTarget);
     const title = f.get('title')?.toString().trim();
     const content = f.get('content')?.toString().trim();
     const priority = f.get('priority')?.toString();
     const important = priority === 'Important' || priority === 'Urgent';
+    const date = f.get('date')?.toString().trim();
 
     if (!title || title.length < 2) {
       toast('Title must be at least 2 characters');
@@ -1526,29 +1544,161 @@ export function ClubAnnouncements(){
     }
 
     setSubmitting(true);
-    try{
-      const created = await api.post('/notices',{
+    try {
+      const created = await api.post('/notices', {
         title,
         description: content,
         category: 'Club',
         important,
-        status: 'published'
+        status: 'published',
+        publishedAt: date || new Date().toISOString(),
       });
       toast('Announcement published successfully');
-      e.currentTarget.reset();
+      setFormKey((k) => k + 1);
       if (created) {
         setData((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
       }
       await refetch();
-    }catch(err){
-      toast(err.message||'Failed to post announcement');
-    }finally{
+    } catch (err) {
+      toast(err.message || 'Failed to post announcement');
+    } finally {
       setSubmitting(false);
     }
   };
 
-  if(loading)return <LoadingState/>;
-  return <><PageHeader eyebrow="Community updates" title="Announcements" description="Keep members informed with clear, timely updates."/><div className="announcement-layout"><form className="settings-card" onSubmit={submit}><h2>Post an announcement</h2><Input label="Title" name="title" required minLength={2}/><label className="field"><span>Content</span><textarea name="content" rows="6" required minLength={2} placeholder="Write your announcement content here..."/></label><div className="form-grid"><label className="field"><span>Priority</span><select name="priority"><option>Normal</option><option>Important</option><option>Urgent</option></select></label><Input label="Publish date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required/></div><Button type="submit" disabled={submitting}>{submitting ? 'Publishing…' : <><Send size={17}/> Publish announcement</>}</Button></form><section><div className="section-head"><h2>Previous announcements</h2><span>{items.length} total</span></div><div className="announcement-list">{items.map(n=><article key={n.id}><Badge tone={n.important?'amber':'neutral'}>{n.category}</Badge><h3>{n.title}</h3><p>{n.description}</p><time>{n.date}</time></article>)}</div></section></div></>
+  const handleDelete = async (noticeId) => {
+    try {
+      await api.delete(`/notices/${noticeId}`);
+      toast('Announcement deleted');
+      setData((prev) => (Array.isArray(prev) ? prev.filter((x) => (x._id || x.id) !== noticeId) : []));
+      refetch();
+    } catch (err) {
+      toast(err.message || 'Delete failed');
+    }
+  };
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Community updates"
+        title="Announcements"
+        description="Keep members and the campus community informed with clear, timely updates."
+      />
+      <div className="announcement-layout">
+        <form key={formKey} className="settings-card" onSubmit={submit}>
+          <h2>Post an announcement</h2>
+          <Input label="Title" name="title" required minLength={2} placeholder="e.g. Workshop schedule update" />
+          <label className="field">
+            <span>Content</span>
+            <textarea
+              name="content"
+              rows="6"
+              required
+              minLength={2}
+              placeholder="Write your announcement content here..."
+            />
+          </label>
+          <div className="form-grid">
+            <label className="field">
+              <span>Priority</span>
+              <select name="priority">
+                <option>Normal</option>
+                <option>Important</option>
+                <option>Urgent</option>
+              </select>
+            </label>
+            <Input
+              label="Publish date"
+              name="date"
+              type="date"
+              defaultValue={new Date().toISOString().split('T')[0]}
+              required
+            />
+          </div>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? 'Publishing…' : <><Send size={17} /> Publish announcement</>}
+          </Button>
+        </form>
+
+        <section>
+          <div className="section-head">
+            <h2>Previous announcements</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="filter-pills" style={{ margin: 0 }}>
+                <button
+                  type="button"
+                  className={scope === 'mine' ? 'active' : ''}
+                  onClick={() => setScope('mine')}
+                >
+                  My club
+                </button>
+                <button
+                  type="button"
+                  className={scope === 'all' ? 'active' : ''}
+                  onClick={() => setScope('all')}
+                >
+                  All campus
+                </button>
+              </div>
+              <span>{items.length} total</span>
+            </div>
+          </div>
+
+          {loading ? (
+            <LoadingState />
+          ) : items.length === 0 ? (
+            <div className="empty-state" style={{ padding: '40px 20px' }}>
+              <Megaphone size={28} />
+              <h3>No announcements yet</h3>
+              <p>Post your first announcement to keep members updated.</p>
+            </div>
+          ) : (
+            <div className="announcement-list">
+              {items.map((n) => (
+                <article key={n.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <Badge tone={n.important ? 'amber' : 'neutral'}>{n.category}</Badge>
+                    {n.isMine && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(n._id || n.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#848492',
+                          cursor: 'pointer',
+                          padding: 4,
+                          borderRadius: 6,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'color 0.15s, background 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#fb7185';
+                          e.currentTarget.style.background = 'rgba(251,113,133,0.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#848492';
+                          e.currentTarget.style.background = 'none';
+                        }}
+                        title="Delete announcement"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                  <h3>{n.title}</h3>
+                  <p>{n.description}</p>
+                  <time>{n.date}</time>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
 }
 
 export function ClubMembers() {

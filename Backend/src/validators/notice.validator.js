@@ -7,6 +7,7 @@ const noticeFields = {
   category: z.string().trim().min(2).max(60).default('General'),
   important: z.boolean().optional(),
   status: z.enum(['draft', 'pending', 'published']).optional(),
+  publishedAt: z.coerce.date().optional(),
   expiresAt: z.coerce.date().optional(),
 }
 
@@ -16,6 +17,8 @@ export const updateNoticeSchema = z
   .refine((value) => Object.keys(value).length > 0, 'At least one field is required')
 export const noticeQuerySchema = z.object({
   ...paginationFields,
+  club: z.string().trim().max(100).optional(),
+  mine: z.enum(['true', 'false']).optional(),
   search: z.string().trim().max(100).optional(),
   category: z.string().trim().max(60).optional(),
   important: optionalBoolean,

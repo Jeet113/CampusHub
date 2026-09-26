@@ -1,6 +1,9 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'
 
-let accessToken = null
+const ACCESS_TOKEN_KEY = 'campushub_access_token'
+const REFRESH_TOKEN_KEY = 'campushub_refresh_token'
+
+let accessToken = typeof window !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null
 
 export class ApiClientError extends Error {
   constructor(message, status, errors = []) {
@@ -13,6 +16,26 @@ export class ApiClientError extends Error {
 
 export function setAccessToken(token) {
   accessToken = token || null
+  if (typeof window !== 'undefined') {
+    if (token) localStorage.setItem(ACCESS_TOKEN_KEY, token)
+    else localStorage.removeItem(ACCESS_TOKEN_KEY)
+  }
+}
+
+export function setRefreshToken(token) {
+  if (typeof window !== 'undefined') {
+    if (token) localStorage.setItem(REFRESH_TOKEN_KEY, token)
+    else localStorage.removeItem(REFRESH_TOKEN_KEY)
+  }
+}
+
+export function getStoredRefreshToken() {
+  return typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null
+}
+
+export function clearTokens() {
+  setAccessToken(null)
+  setRefreshToken(null)
 }
 
 export function getAssetUrl(asset) {
@@ -40,14 +63,18 @@ async function parseResponse(response) {
 }
 
 async function refreshAccessToken() {
+  const storedRefresh = getStoredRefreshToken()
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: '{}',
+    body: JSON.stringify(storedRefresh ? { refreshToken: storedRefresh } : {}),
   })
   const payload = await parseResponse(response)
   setAccessToken(payload.data.accessToken)
+  if (payload.data.refreshToken) {
+    setRefreshToken(payload.data.refreshToken)
+  }
   return accessToken
 }
 
@@ -69,7 +96,7 @@ export async function apiRequest(path, options = {}) {
       await refreshAccessToken()
       return apiRequest(path, { ...options, skipRefresh: true })
     } catch {
-      setAccessToken(null)
+      clearTokens()
     }
   }
   return parseResponse(response)

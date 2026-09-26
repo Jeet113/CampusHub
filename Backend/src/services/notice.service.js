@@ -18,12 +18,19 @@ function assertCanManage(user, notice) {
 export async function listNotices(query, user) {
   const { page, limit, skip } = getPagination(query)
   const filter = {}
-  if (user?.role === 'admin' && query.status) filter.status = query.status
-  else if (user?.role === 'club' && query.status) filter.$or = [{ status: 'published' }, { author: user._id }]
-  else {
+  if (query.mine === 'true' && user) {
+    const userClubId = user.club || (await Club.findOne({ createdBy: user._id }))?._id
+    filter.$or = [{ author: user._id }, ...(userClubId ? [{ club: userClubId }] : [])]
+    if (query.status) filter.status = query.status
+  } else if (user?.role === 'admin' && query.status) {
+    filter.status = query.status
+  } else if (user?.role === 'club' && query.status) {
+    filter.$or = [{ status: 'published' }, { author: user._id }]
+  } else {
     filter.status = 'published'
     filter.$or = [{ expiresAt: null }, { expiresAt: { $exists: false } }, { expiresAt: { $gt: new Date() } }]
   }
+  if (query.club) filter.club = query.club
   if (query.category) filter.category = query.category
   if (typeof query.important === 'boolean') filter.important = query.important
   if (query.search) {
@@ -47,12 +54,13 @@ export async function getNotice(id, user) {
 export async function createNotice(data, user) {
   const isAdmin = user.role === 'admin'
   const clubId = user.club || (await Club.findOne({ createdBy: user._id }))?._id
+  const pubDate = data.publishedAt ? new Date(data.publishedAt) : new Date()
   return Notice.create({
     ...data,
     author: user._id,
     club: isAdmin ? undefined : clubId,
     status: data.status === 'draft' ? 'draft' : 'published',
-    publishedAt: data.status === 'draft' ? undefined : new Date(),
+    publishedAt: data.status === 'draft' ? undefined : pubDate,
   })
 }
 
