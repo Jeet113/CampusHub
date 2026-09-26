@@ -58,12 +58,12 @@ export async function listEvents(query, user) {
     else if (user?.role === 'club' && String(user.club || '') === String(targetClub)) {
       if (query.status) filter.status = query.status
     } else {
-      filter.status = 'published'
+      filter.status = query.status ? (['published', 'ended'].includes(query.status) ? query.status : 'published') : { $in: ['published', 'ended'] }
     }
   } else if (user?.role === 'admin') {
     if (query.status) filter.status = query.status
   } else {
-    filter.status = 'published'
+    filter.status = query.status ? (['published', 'ended'].includes(query.status) ? query.status : 'published') : { $in: ['published', 'ended'] }
   }
   if (query.category) filter.category = query.category
   if (query.search) {
@@ -87,7 +87,7 @@ export async function listEvents(query, user) {
 
 export async function getEvent(identifier, user) {
   const event = await Event.findOne(identifierFilter(identifier)).populate('club', 'name slug logo status')
-  if (!event || (event.status !== 'published' && !canManage(user, event))) throw new ApiError(404, 'Event not found')
+  if (!event || (!['published', 'ended'].includes(event.status) && !canManage(user, event))) throw new ApiError(404, 'Event not found')
 
   let isRegistered = false
   let isSaved = false
@@ -160,6 +160,19 @@ export async function updateEvent(identifier, data, user) {
     event.status = changes.status === 'draft' ? 'draft' : 'pending'
     event.approvedBy = undefined
     event.approvedAt = undefined
+  }
+  await event.save()
+  return event
+}
+
+export async function setEventStatus(identifier, status, user) {
+  const event = await Event.findOne(identifierFilter(identifier))
+  if (!event) throw new ApiError(404, 'Event not found')
+  assertCanManage(user, event)
+  event.status = status
+  if (status === 'published') {
+    event.approvedBy ||= user._id
+    event.approvedAt ||= new Date()
   }
   await event.save()
   return event
@@ -270,7 +283,7 @@ export async function cancelEventRegistration(identifier, student) {
 }
 
 export async function saveEvent(identifier, user) {
-  const event = await Event.findOne({ ...identifierFilter(identifier), status: 'published' })
+  const event = await Event.findOne({ ...identifierFilter(identifier), status: { $in: ['published', 'ended'] } })
   if (!event) throw new ApiError(404, 'Event not found')
   await User.updateOne({ _id: user._id }, { $addToSet: { savedEvents: event._id } })
   return { saved: true }

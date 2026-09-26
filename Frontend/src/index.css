@@ -315,3 +315,49 @@
   }
 }
 
+/* Event Status Select Pill */
+.status-select-pill {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px 24px 2px 10px;
+  border-radius: 999px;
+  font: 600 11px 'JetBrains Mono', monospace;
+  letter-spacing: .03em;
+  cursor: pointer;
+  outline: none;
+  transition: all .2s ease;
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  background-size: 10px 10px;
+}
+.status-select-pill.status-published {
+  color: #60e5b1;
+  background-color: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2360e5b1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+.status-select-pill.status-published:hover {
+  background-color: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.45);
+}
+.status-select-pill.status-ended {
+  color: #fbbf4a;
+  background-color: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fbbf4a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+.status-select-pill.status-ended:hover {
+  background-color: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+.status-select-pill option {
+  background: #15151e;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 6px 12px;
+}

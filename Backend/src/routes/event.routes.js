@@ -6,12 +6,19 @@ import { singleImageUpload } from '../middleware/upload.middleware.js'
 import { validate } from '../middleware/validation.middleware.js'
 import asyncHandler from '../utils/asyncHandler.js'
 import { idParams } from '../validators/common.validator.js'
-import { createEventSchema, eventQuerySchema, updateEventSchema } from '../validators/event.validator.js'
+import { createEventSchema, eventQuerySchema, eventStatusSchema, updateEventSchema } from '../validators/event.validator.js'
 
 const router = Router()
 
 router.get('/', optionalAuthenticate, validate({ query: eventQuerySchema }), asyncHandler(controller.list))
 router.post('/', authenticate, requireRole('club', 'admin'), validate({ body: createEventSchema }), asyncHandler(controller.create))
+router.patch(
+  '/:id/status',
+  authenticate,
+  requireRole('club', 'admin'),
+  validate({ params: idParams, body: eventStatusSchema }),
+  asyncHandler(controller.updateStatus),
+)
 router.post('/:id/register', authenticate, requireRole('student'), validate({ params: idParams }), asyncHandler(controller.register))
 router.delete(
   '/:id/register',

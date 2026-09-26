@@ -7,7 +7,7 @@ export const approvalSchema = z.object({
 export const userStatusSchema = z.object({ status: z.enum(['active', 'suspended']) })
 export const clubStatusSchema = z.object({ status: z.enum(['pending', 'approved', 'rejected', 'suspended']) })
 export const eventStatusSchema = z.object({
-  status: z.enum(['draft', 'pending', 'published', 'rejected', 'cancelled', 'completed']),
+  status: z.enum(['draft', 'pending', 'published', 'rejected', 'cancelled', 'completed', 'ended']),
 })
 export const seedClubSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(150),

@@ -98,7 +98,7 @@ export function ClubDashboard() {
     month: month(e.date),
     date: fmt(e.date),
     registrations: e.registrationCount || 0,
-    status: e.status === 'published' ? 'Published' : e.status === 'pending' ? 'Pending' : 'Draft',
+    status: e.status === 'ended' || e.status === 'completed' || e.status === 'cancelled' ? 'Ended' : 'Published',
   }))
   const memberCount = membersRaw?.length || 0
 
@@ -1005,21 +1005,42 @@ function EventParticipantsModal({ event, onClose }) {
 export function ClubEvents() {
   const { data: raw, loading, refetch } = useApi('/events', { params: { mine: 'true' } })
   const [q, setQ] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
   const [remove, setRemove] = useState(null)
   const [viewingParticipants, setViewingParticipants] = useState(null)
   const { toast } = useToast()
 
-  const items = (raw || []).map((e) => ({
-    ...e,
-    id: e._id,
-    day: day(e.date),
-    month: month(e.date),
-    date: fmt(e.date),
-    registrations: e.registrationCount || 0,
-    status: e.status === 'published' ? 'Published' : e.status === 'pending' ? 'Pending' : 'Draft',
-  }))
+  const items = (raw || []).map((e) => {
+    const isEnded = e.status === 'ended' || e.status === 'completed' || e.status === 'cancelled'
+    const status = isEnded ? 'Ended' : 'Published'
+    return {
+      ...e,
+      id: e._id,
+      day: day(e.date),
+      month: month(e.date),
+      date: fmt(e.date),
+      registrations: e.registrationCount || 0,
+      status,
+    }
+  })
 
-  const list = items.filter((e) => e.title.toLowerCase().includes(q.toLowerCase()))
+  const list = items.filter((e) => {
+    const matchQ = (e.title || '').toLowerCase().includes(q.toLowerCase())
+    if (!matchQ) return false
+    if (statusFilter === 'Published') return e.status === 'Published'
+    if (statusFilter === 'Ended') return e.status === 'Ended'
+    return true
+  })
+
+  const handleStatusChange = async (eventItem, newStatus) => {
+    try {
+      await api.patch(`/events/${eventItem._id}/status`, { status: newStatus.toLowerCase() })
+      toast(`Event marked as ${newStatus}`)
+      refetch()
+    } catch (err) {
+      toast(err.message || 'Failed to update status')
+    }
+  }
 
   const del = async () => {
     try {
@@ -1040,7 +1061,7 @@ export function ClubEvents() {
       <PageHeader
         eyebrow="Event management"
         title="Your events"
-        description={`${items.length} events across drafts, reviews, and published listings.`}
+        description={`${items.length} events across published and ended listings.`}
         actions={
           <Link to="/club/events/create">
             <Button>
@@ -1050,8 +1071,32 @@ export function ClubEvents() {
         }
       />
 
-      <div className="list-toolbar">
-        <SearchBar value={q} onChange={setQ} placeholder="Search your events…" />
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <SearchBar value={q} onChange={setQ} placeholder="Search your events…" />
+        </div>
+        <div className="approval-tabs" style={{ margin: 0, border: 'none', gap: 6 }}>
+          {['All', 'Published', 'Ended'].map((filter) => (
+            <button
+              key={filter}
+              className={statusFilter === filter ? 'active' : ''}
+              onClick={() => setStatusFilter(filter)}
+              style={{
+                height: 38,
+                padding: '0 16px',
+                borderRadius: 8,
+                background: statusFilter === filter ? 'var(--card)' : 'transparent',
+                border: statusFilter === filter ? '1px solid var(--border)' : '1px solid transparent',
+                color: statusFilter === filter ? '#fff' : '#888894',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 600,
+              }}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
       </div>
 
       {list.length ? (
@@ -1085,9 +1130,16 @@ export function ClubEvents() {
                 </Badge>
               </span>
               <span data-label="Status">
-                <Badge tone={e.status === 'Published' ? 'green' : e.status === 'Pending' ? 'amber' : 'neutral'}>
-                  {e.status}
-                </Badge>
+                <select
+                  value={e.status}
+                  onChange={(evt) => handleStatusChange(e, evt.target.value)}
+                  className={`status-select-pill status-${e.status.toLowerCase()}`}
+                  title="Click to change status (Published / Ended)"
+                  aria-label={`Status for ${e.title}`}
+                >
+                  <option value="Published">Published</option>
+                  <option value="Ended">Ended</option>
+                </select>
               </span>
               <div className="table-actions">
                 <button
@@ -1116,7 +1168,7 @@ export function ClubEvents() {
           ))}
         </div>
       ) : (
-        <EmptyState title="No events found" onReset={() => setQ('')} />
+        <EmptyState title="No events found" onReset={() => { setQ(''); setStatusFilter('All'); }} />
       )}
 
       {/* View Registered Participants Modal */}

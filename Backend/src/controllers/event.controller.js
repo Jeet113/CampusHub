@@ -10,6 +10,7 @@ import {
   registerForEvent,
   replaceEventBanner,
   saveEvent,
+  setEventStatus,
   unsaveEvent,
   updateEvent,
 } from '../services/event.service.js'
@@ -37,6 +38,14 @@ export async function create(request, response) {
 export async function update(request, response) {
   return response.json(
     new ApiResponse(await updateEvent(input(request, 'params').id, input(request, 'body'), request.user), 'Event updated'),
+  )
+}
+
+export async function updateStatus(request, response) {
+  const { id } = input(request, 'params')
+  const { status } = input(request, 'body')
+  return response.json(
+    new ApiResponse(await setEventStatus(id, status, request.user), 'Event status updated'),
   )
 }
 

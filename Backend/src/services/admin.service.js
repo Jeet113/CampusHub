@@ -264,7 +264,7 @@ export async function setEventStatus(id, status, admin) {
   const updates = { status }
   if (status === 'published') Object.assign(updates, { approvedBy: admin._id, approvedAt: new Date() })
   const change = { $set: updates }
-  if (status !== 'published') change.$unset = { approvedBy: 1, approvedAt: 1 }
+  if (!['published', 'ended'].includes(status)) change.$unset = { approvedBy: 1, approvedAt: 1 }
   const event = await Event.findByIdAndUpdate(id, change, { new: true, runValidators: true })
   if (!event) throw new ApiError(404, 'Event not found')
   await createNotification({

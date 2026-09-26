@@ -10,6 +10,8 @@ export default function EventCard({ event, base, saved = false, onSave }) {
   const routeBase = base || defaultBase
   const bannerUrl = getAssetUrl(event.banner)
 
+  const isEnded = event.status === 'ended' || event.status === 'Ended' || event.status === 'completed'
+
   return (
     <article className="event-card interactive-card">
       {bannerUrl ? (
@@ -22,6 +24,7 @@ export default function EventCard({ event, base, saved = false, onSave }) {
               <span>{event.month}</span>
             </div>
             <div className="event-card-actions">
+              {isEnded && <Badge tone="amber">Ended</Badge>}
               <Badge tone="amber">{event.category}</Badge>
               {onSave && (
                 <button
@@ -46,6 +49,7 @@ export default function EventCard({ event, base, saved = false, onSave }) {
             <span>{event.month}</span>
           </div>
           <div className="event-card-actions">
+            {isEnded && <Badge tone="amber">Ended</Badge>}
             <Badge>{event.category}</Badge>
             {onSave && (
               <button

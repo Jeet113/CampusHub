@@ -1041,7 +1041,7 @@ export function AdminEvents() {
     id: e._id,
     day: day(e.date),
     dateFormatted: fmt(e.date),
-    status: e.status === 'published' ? 'Published' : e.status === 'pending' ? 'Pending' : 'Draft',
+    status: e.status === 'published' ? 'Published' : e.status === 'ended' ? 'Ended' : e.status === 'pending' ? 'Pending' : 'Draft',
   }))
 
   const filteredEvents = useMemo(() => {
@@ -1055,11 +1055,22 @@ export function AdminEvents() {
 
       if (statusFilter === 'All') return true
       if (statusFilter === 'Published') return e.status === 'Published'
+      if (statusFilter === 'Ended') return e.status === 'Ended'
       if (statusFilter === 'Pending') return e.status === 'Pending'
       if (statusFilter === 'Draft') return e.status === 'Draft'
       return true
     })
   }, [eventsList, q, statusFilter])
+
+  const handleStatusChange = async (eventItem, newStatus) => {
+    try {
+      await api.patch(`/events/${eventItem.id || eventItem._id}/status`, { status: newStatus.toLowerCase() })
+      toast(`Event marked as ${newStatus}`)
+      refetch()
+    } catch (err) {
+      toast(err.message || 'Failed to update status')
+    }
+  }
 
   const handleEventApproval = async (event, decision) => {
     try {
@@ -1099,7 +1110,7 @@ export function AdminEvents() {
           <SearchBar value={q} onChange={setQ} placeholder="Search events by title, organizer, category, or venue…" />
         </div>
         <div className="approval-tabs" style={{ margin: 0, border: 'none', gap: 6 }}>
-          {['All', 'Published', 'Pending', 'Draft'].map((filter) => (
+          {['All', 'Published', 'Ended', 'Pending', 'Draft'].map((filter) => (
             <button
               key={filter}
               className={statusFilter === filter ? 'active' : ''}
@@ -1135,9 +1146,22 @@ export function AdminEvents() {
                 <Badge>{e.category}</Badge>
               </span>
               <span data-label="Status">
-                <Badge tone={e.status === 'Published' ? 'green' : e.status === 'Pending' ? 'amber' : 'neutral'}>
-                  {e.status}
-                </Badge>
+                {e.status === 'Published' || e.status === 'Ended' ? (
+                  <select
+                    value={e.status}
+                    onChange={(evt) => handleStatusChange(e, evt.target.value)}
+                    className={`status-select-pill status-${e.status.toLowerCase()}`}
+                    title="Click to change status"
+                    aria-label={`Status for ${e.title}`}
+                  >
+                    <option value="Published">Published</option>
+                    <option value="Ended">Ended</option>
+                  </select>
+                ) : (
+                  <Badge tone={e.status === 'Pending' ? 'amber' : 'neutral'}>
+                    {e.status}
+                  </Badge>
+                )}
               </span>
               <div className="table-actions">
                 <button onClick={() => setSelectedEvent(e)} aria-label={`View ${e.title}`} title="View details">

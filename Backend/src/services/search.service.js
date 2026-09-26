@@ -8,7 +8,7 @@ export async function globalSearch(term) {
   const query = new RegExp(escapeRegex(term), 'i')
   const now = new Date()
   const [events, clubs, notices] = await Promise.all([
-    Event.find({ status: 'published', $or: [{ title: query }, { organizer: query }, { description: query }] })
+    Event.find({ status: { $in: ['published', 'ended'] }, $or: [{ title: query }, { organizer: query }, { description: query }] })
       .select('title slug organizer category date location banner')
       .limit(10),
     Club.find({ status: 'approved', $or: [{ name: query }, { category: query }, { description: query }] })

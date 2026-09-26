@@ -25,12 +25,15 @@ export const createEventSchema = z.object(eventFields)
 export const updateEventSchema = z
   .object(Object.fromEntries(Object.entries(eventFields).map(([key, value]) => [key, value.optional()])))
   .refine((value) => Object.keys(value).length > 0, 'At least one field is required')
+export const eventStatusSchema = z.object({
+  status: z.enum(['draft', 'pending', 'published', 'rejected', 'cancelled', 'completed', 'ended']),
+})
 export const eventQuerySchema = z.object({
   ...paginationFields,
   club: z.string().trim().max(100).optional(),
   mine: z.enum(['true', 'false']).optional(),
   search: z.string().trim().max(100).optional(),
   category: z.string().trim().max(60).optional(),
-  status: z.enum(['draft', 'pending', 'published', 'rejected', 'cancelled', 'completed']).optional(),
+  status: z.enum(['draft', 'pending', 'published', 'rejected', 'cancelled', 'completed', 'ended']).optional(),
   sort: z.enum(['date', '-date', 'newest', 'popular']).default('date'),
 })
