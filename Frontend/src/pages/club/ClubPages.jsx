@@ -1216,7 +1216,20 @@ export function CreateEvent() {
   const [bannerFile, setBannerFile] = useState(null)
   const [bannerPreview, setBannerPreview] = useState(null)
   const [formError, setFormError] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [customCategory, setCustomCategory] = useState('')
   const bannerInputRef = useRef(null)
+
+  const EVENT_CATEGORIES = [
+    'Workshop',
+    'Competition',
+    'Seminar',
+    'Cultural',
+    'Sports',
+    'Career',
+    'Technology',
+    'Other',
+  ]
 
   const handleBannerSelect = (e) => {
     const file = e.target.files?.[0]
@@ -1241,9 +1254,15 @@ export function CreateEvent() {
     setFormError('')
     const form = new FormData(e.currentTarget)
     const next = {}
-    ;['title', 'description', 'category', 'date', 'start', 'location'].forEach((k) => {
+    ;['title', 'description', 'date', 'start', 'location'].forEach((k) => {
       if (!form.get(k)?.toString().trim()) next[k] = 'Required'
     })
+    if (!selectedCategory) {
+      next.category = 'Required'
+    } else if (selectedCategory === 'Other' && !customCategory.trim()) {
+      next.customCategory = 'Please specify custom category'
+    }
+
     if (Object.keys(next).length) {
       setErrors(next)
       return
@@ -1251,7 +1270,7 @@ export function CreateEvent() {
 
     const title = form.get('title')?.toString().trim()
     const description = form.get('description')?.toString().trim()
-    const category = form.get('category')?.toString().trim()
+    const category = selectedCategory === 'Other' ? (customCategory.trim() || 'Other') : selectedCategory
     const date = form.get('date')?.toString().trim()
     const startTime = form.get('start')?.toString().trim()
     const endTime = form.get('end')?.toString().trim() || startTime
@@ -1335,15 +1354,46 @@ export function CreateEvent() {
           <div className="form-grid">
             <label className="field">
               <span>Category</span>
-              <select name="category" defaultValue="" required>
+              <select
+                name="categorySelect"
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value)
+                  setErrors((prev) => ({ ...prev, category: undefined }))
+                }}
+                required
+              >
                 <option value="" disabled>Select category</option>
-                {['Workshop', 'Competition', 'Seminar', 'Cultural', 'Sports', 'Career', 'Technology'].map((x) => (
+                {EVENT_CATEGORIES.map((x) => (
                   <option key={x} value={x}>{x}</option>
                 ))}
               </select>
-              {errors.category && <small className="field-error">Required</small>}
+              {errors.category && <small className="field-error">{errors.category}</small>}
             </label>
-            <Input label="Location" name="location" error={errors.location} placeholder="e.g. Academic Building, Room 501" required />
+
+            {selectedCategory === 'Other' ? (
+              <Input
+                label="Specify custom category"
+                name="customCategory"
+                value={customCategory}
+                onChange={(e) => {
+                  setCustomCategory(e.target.value)
+                  setErrors((prev) => ({ ...prev, customCategory: undefined }))
+                }}
+                placeholder="e.g. Hackathon, Gaming, Networking, Exhibition..."
+                error={errors.customCategory}
+                required
+              />
+            ) : null}
+
+            <Input
+              label="Location"
+              name="location"
+              error={errors.location}
+              placeholder="e.g. Academic Building, Room 501"
+              required
+              className={selectedCategory === 'Other' ? 'span-2' : ''}
+            />
           </div>
         </section>
 
