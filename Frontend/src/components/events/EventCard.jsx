@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Badge from '../common/Badge'
 import { getAssetUrl } from '../../services/api'
 import { useAuth } from '../../hooks/useAuth'
+import { isEventEnded } from '../../utils/eventStatus'
 
 export default function EventCard({ event, base, saved = false, onSave }) {
   const { user } = useAuth()
@@ -10,7 +11,7 @@ export default function EventCard({ event, base, saved = false, onSave }) {
   const routeBase = base || defaultBase
   const bannerUrl = getAssetUrl(event.banner)
 
-  const isEnded = event.status === 'ended' || event.status === 'Ended' || event.status === 'completed'
+  const isEnded = isEventEnded(event)
 
   return (
     <article className="event-card interactive-card">

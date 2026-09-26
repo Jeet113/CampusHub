@@ -42,6 +42,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useApi } from '../../hooks/useApi'
 import { api, getAssetUrl } from '../../services/api'
 import { SettingsPage } from '../student/StudentPages'
+import { getEventAutomatedStatus } from '../../utils/eventStatus'
 
 function fmt(d){if(!d)return '';const dt=new Date(d);return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
 function day(d){if(!d)return '';return new Date(d).getDate()}
@@ -98,7 +99,7 @@ export function ClubDashboard() {
     month: month(e.date),
     date: fmt(e.date),
     registrations: e.registrationCount || 0,
-    status: e.status === 'ended' || e.status === 'completed' || e.status === 'cancelled' ? 'Ended' : 'Published',
+    status: getEventAutomatedStatus(e),
   }))
   const memberCount = membersRaw?.length || 0
 
@@ -1010,19 +1011,15 @@ export function ClubEvents() {
   const [viewingParticipants, setViewingParticipants] = useState(null)
   const { toast } = useToast()
 
-  const items = (raw || []).map((e) => {
-    const isEnded = e.status === 'ended' || e.status === 'completed' || e.status === 'cancelled'
-    const status = isEnded ? 'Ended' : 'Published'
-    return {
-      ...e,
-      id: e._id,
-      day: day(e.date),
-      month: month(e.date),
-      date: fmt(e.date),
-      registrations: e.registrationCount || 0,
-      status,
-    }
-  })
+  const items = (raw || []).map((e) => ({
+    ...e,
+    id: e._id,
+    day: day(e.date),
+    month: month(e.date),
+    date: fmt(e.date),
+    registrations: e.registrationCount || 0,
+    status: getEventAutomatedStatus(e),
+  }))
 
   const list = items.filter((e) => {
     const matchQ = (e.title || '').toLowerCase().includes(q.toLowerCase())
@@ -1031,16 +1028,6 @@ export function ClubEvents() {
     if (statusFilter === 'Ended') return e.status === 'Ended'
     return true
   })
-
-  const handleStatusChange = async (eventItem, newStatus) => {
-    try {
-      await api.patch(`/events/${eventItem._id}/status`, { status: newStatus.toLowerCase() })
-      toast(`Event marked as ${newStatus}`)
-      refetch()
-    } catch (err) {
-      toast(err.message || 'Failed to update status')
-    }
-  }
 
   const del = async () => {
     try {
@@ -1130,16 +1117,9 @@ export function ClubEvents() {
                 </Badge>
               </span>
               <span data-label="Status">
-                <select
-                  value={e.status}
-                  onChange={(evt) => handleStatusChange(e, evt.target.value)}
-                  className={`status-select-pill status-${e.status.toLowerCase()}`}
-                  title="Click to change status (Published / Ended)"
-                  aria-label={`Status for ${e.title}`}
-                >
-                  <option value="Published">Published</option>
-                  <option value="Ended">Ended</option>
-                </select>
+                <Badge tone={e.status === 'Published' ? 'green' : 'amber'}>
+                  {e.status}
+                </Badge>
               </span>
               <div className="table-actions">
                 <button

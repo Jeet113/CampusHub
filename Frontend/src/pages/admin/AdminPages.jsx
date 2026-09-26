@@ -37,6 +37,7 @@ import { useToast } from '../../components/common/Toast'
 import { useApi } from '../../hooks/useApi'
 import { api, getAssetUrl } from '../../services/api'
 import { SettingsPage } from '../student/StudentPages'
+import { getEventAutomatedStatus } from '../../utils/eventStatus'
 
 function fmt(d) {
   if (!d) return ''
@@ -1041,7 +1042,7 @@ export function AdminEvents() {
     id: e._id,
     day: day(e.date),
     dateFormatted: fmt(e.date),
-    status: e.status === 'published' ? 'Published' : e.status === 'ended' ? 'Ended' : e.status === 'pending' ? 'Pending' : 'Draft',
+    status: getEventAutomatedStatus(e),
   }))
 
   const filteredEvents = useMemo(() => {
@@ -1061,16 +1062,6 @@ export function AdminEvents() {
       return true
     })
   }, [eventsList, q, statusFilter])
-
-  const handleStatusChange = async (eventItem, newStatus) => {
-    try {
-      await api.patch(`/events/${eventItem.id || eventItem._id}/status`, { status: newStatus.toLowerCase() })
-      toast(`Event marked as ${newStatus}`)
-      refetch()
-    } catch (err) {
-      toast(err.message || 'Failed to update status')
-    }
-  }
 
   const handleEventApproval = async (event, decision) => {
     try {
@@ -1146,22 +1137,9 @@ export function AdminEvents() {
                 <Badge>{e.category}</Badge>
               </span>
               <span data-label="Status">
-                {e.status === 'Published' || e.status === 'Ended' ? (
-                  <select
-                    value={e.status}
-                    onChange={(evt) => handleStatusChange(e, evt.target.value)}
-                    className={`status-select-pill status-${e.status.toLowerCase()}`}
-                    title="Click to change status"
-                    aria-label={`Status for ${e.title}`}
-                  >
-                    <option value="Published">Published</option>
-                    <option value="Ended">Ended</option>
-                  </select>
-                ) : (
-                  <Badge tone={e.status === 'Pending' ? 'amber' : 'neutral'}>
-                    {e.status}
-                  </Badge>
-                )}
+                <Badge tone={e.status === 'Published' ? 'green' : e.status === 'Ended' ? 'amber' : e.status === 'Pending' ? 'amber' : 'neutral'}>
+                  {e.status}
+                </Badge>
               </span>
               <div className="table-actions">
                 <button onClick={() => setSelectedEvent(e)} aria-label={`View ${e.title}`} title="View details">
