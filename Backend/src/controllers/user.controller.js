@@ -1,9 +1,13 @@
 import ApiResponse from '../utils/ApiResponse.js'
 import { input } from '../utils/request.js'
-import { changePassword, getProfile, replaceAvatar, updateProfile } from '../services/user.service.js'
+import { changePassword, getProfile, getStudentDashboard, replaceAvatar, updateProfile } from '../services/user.service.js'
 
 export async function getMe(request, response) {
   return response.json(new ApiResponse(await getProfile(request.user._id), 'Profile retrieved'))
+}
+
+export async function getDashboard(request, response) {
+  return response.json(new ApiResponse(await getStudentDashboard(request.user._id), 'Dashboard data retrieved'))
 }
 
 export async function updateMe(request, response) {

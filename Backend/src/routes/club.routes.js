@@ -63,6 +63,7 @@ router.post(
   singleImageUpload('banner'),
   asyncHandler(controller.uploadBanner),
 )
+router.get('/my/joined', authenticate, requireRole('student'), asyncHandler(controller.listMyClubs))
 router.get('/:id', optionalAuthenticate, validate({ params: idParams }), asyncHandler(controller.getOne))
 router.put(
   '/:id',

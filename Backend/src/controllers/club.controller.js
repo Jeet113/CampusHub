@@ -5,6 +5,7 @@ import {
   deleteClub,
   getClub,
   getClubDashboard,
+  getStudentJoinedClubs,
   joinClub,
   listClubs,
   listMembers,
@@ -13,6 +14,11 @@ import {
   updateClub,
   updateMember,
 } from '../services/club.service.js'
+
+export async function listMyClubs(request, response) {
+  const result = await getStudentJoinedClubs(request.user._id, input(request, 'query'))
+  return response.json(new ApiResponse(result.items, 'Joined clubs retrieved', { pagination: result.pagination }))
+}
 
 export async function dashboard(request, response) {
   return response.json(

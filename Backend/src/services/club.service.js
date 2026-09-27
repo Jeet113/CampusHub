@@ -128,9 +128,33 @@ export async function listClubs(query, user) {
 }
 
 export async function getClub(identifier, user) {
-  const club = await Club.findOne(identifierFilter(identifier)).populate('createdBy', 'name email')
+  const club = await Club.findOne(identifierFilter(identifier, user)).populate('createdBy', 'name email')
   if (!club || (club.status === 'suspended' && !canManage(user, club))) throw new ApiError(404, 'Club not found')
-  return club
+
+  let isMember = false
+  let isPending = false
+  let membershipStatus = null
+  let membershipRole = null
+
+  if (user && user._id) {
+    const membership = await Membership.findOne({ club: club._id, user: user._id })
+    if (membership) {
+      membershipStatus = membership.status
+      isMember = membership.status === 'approved'
+      isPending = membership.status === 'pending'
+      membershipRole = membership.role
+    }
+  }
+
+  const obj = club.toObject ? club.toObject() : club
+  return {
+    ...obj,
+    isMember,
+    isJoined: isMember,
+    isPending,
+    membershipStatus,
+    membershipRole,
+  }
 }
 
 export async function createClub(data, user) {
@@ -332,3 +356,19 @@ export async function replaceClubAsset(identifier, kind, file, user) {
   await safelyDeleteAsset(previous)
   return club
 }
+
+export async function getStudentJoinedClubs(studentId, query) {
+  const { page, limit, skip } = getPagination(query)
+  const filter = { user: studentId, status: 'approved' }
+  const [memberships, total] = await Promise.all([
+    Membership.find(filter)
+      .populate('club')
+      .sort({ approvedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Membership.countDocuments(filter),
+  ])
+  const items = memberships.map((m) => m.club).filter(Boolean)
+  return { items, pagination: paginationMeta(page, limit, total) }
+}
+

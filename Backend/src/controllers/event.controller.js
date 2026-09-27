@@ -6,6 +6,8 @@ import {
   deleteEvent,
   getEvent,
   getEventRegistrations,
+  getStudentRegisteredEvents,
+  getStudentSavedEvents,
   listEvents,
   registerForEvent,
   replaceEventBanner,
@@ -14,6 +16,16 @@ import {
   unsaveEvent,
   updateEvent,
 } from '../services/event.service.js'
+
+export async function listMyRegistrations(request, response) {
+  const result = await getStudentRegisteredEvents(request.user._id, input(request, 'query'))
+  return response.json(new ApiResponse(result.items, 'Registered events retrieved', { pagination: result.pagination }))
+}
+
+export async function listMySaved(request, response) {
+  const result = await getStudentSavedEvents(request.user._id, input(request, 'query'))
+  return response.json(new ApiResponse(result.items, 'Saved events retrieved', { pagination: result.pagination }))
+}
 
 export async function listRegistrations(request, response) {
   const result = await getEventRegistrations(input(request, 'params').id, input(request, 'query'), request.user)

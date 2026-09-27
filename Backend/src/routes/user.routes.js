@@ -9,6 +9,7 @@ import { changePasswordSchema, updateProfileSchema } from '../validators/user.va
 const router = Router()
 router.use(authenticate)
 router.get('/me', asyncHandler(controller.getMe))
+router.get('/me/dashboard', asyncHandler(controller.getDashboard))
 router.put('/me', validate({ body: updateProfileSchema }), asyncHandler(controller.updateMe))
 router.patch('/me/password', validate({ body: changePasswordSchema }), asyncHandler(controller.updatePassword))
 router.post('/me/avatar', singleImageUpload('avatar'), asyncHandler(controller.uploadAvatar))

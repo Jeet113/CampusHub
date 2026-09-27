@@ -37,6 +37,8 @@ router.post(
   singleImageUpload('banner'),
   asyncHandler(controller.uploadBanner),
 )
+router.get('/my/registered', authenticate, requireRole('student'), asyncHandler(controller.listMyRegistrations))
+router.get('/my/saved', authenticate, requireRole('student'), asyncHandler(controller.listMySaved))
 router.get('/:id', optionalAuthenticate, validate({ params: idParams }), asyncHandler(controller.getOne))
 router.get(
   '/:id/registrations',

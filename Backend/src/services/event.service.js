@@ -339,3 +339,33 @@ export async function getEventRegistrations(identifier, query, user) {
     total: registrations.length,
   }
 }
+
+export async function getStudentRegisteredEvents(studentId, query) {
+  const { page, limit, skip } = getPagination(query)
+  const filter = { student: studentId, status: { $in: ['registered', 'attended'] } }
+  const [registrations, total] = await Promise.all([
+    EventRegistration.find(filter)
+      .populate({
+        path: 'event',
+        populate: { path: 'club', select: 'name slug logo status' },
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    EventRegistration.countDocuments(filter),
+  ])
+  const items = registrations.map((r) => r.event).filter(Boolean)
+  return { items, pagination: paginationMeta(page, limit, total) }
+}
+
+export async function getStudentSavedEvents(studentId, query) {
+  const { page, limit, skip } = getPagination(query)
+  const user = await User.findById(studentId).populate({
+    path: 'savedEvents',
+    populate: { path: 'club', select: 'name slug logo status' },
+  })
+  const allSaved = user?.savedEvents || []
+  const items = allSaved.slice(skip, skip + limit)
+  return { items, pagination: paginationMeta(page, limit, allSaved.length) }
+}
+

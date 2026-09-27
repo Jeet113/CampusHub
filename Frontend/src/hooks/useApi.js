@@ -13,6 +13,8 @@ export function useApi(path, opts = {}) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(!!path && immediate)
   const [error, setError] = useState(null)
+  const [pagination, setPagination] = useState(null)
+  const [meta, setMeta] = useState(null)
   const mountedRef = useRef(true)
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
@@ -28,6 +30,8 @@ export function useApi(path, opts = {}) {
       if (!mountedRef.current) return
       const resolved = transform ? transform(result) : result?.data ?? result
       setData(resolved)
+      setPagination(result?.pagination || result?.meta?.pagination || null)
+      setMeta(result?.meta || null)
       return resolved
     } catch (err) {
       if (!mountedRef.current) return
@@ -42,7 +46,7 @@ export function useApi(path, opts = {}) {
     if (path && immediate) fetcher()
   }, [fetcher, immediate])
 
-  return { data, loading, error, refetch: fetcher, setData }
+  return { data, loading, error, refetch: fetcher, setData, pagination, meta }
 }
 
 /**
