@@ -591,7 +591,7 @@ export function AdminUsers() {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 14px', fontSize: 13 }}>
+            <div className="modal-detail-grid">
               <span style={{ color: '#8d8d97' }}>Email:</span>
               <strong>{selectedUser.email}</strong>
 
@@ -897,7 +897,7 @@ export function AdminClubs() {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 14px', fontSize: 13 }}>
+            <div className="modal-detail-grid">
               <span style={{ color: '#8d8d97' }}>Slug:</span>
               <code>{selectedClub.slug}</code>
 
@@ -955,8 +955,7 @@ export function AdminClubs() {
               </p>
             </div>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: 14 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '8px 12px', fontSize: 13 }}>
+            <div className="modal-detail-grid">
                 <span style={{ color: '#8d8d97' }}>Organization:</span>
                 <strong>{createdInfo.name}</strong>
                 <span style={{ color: '#8d8d97' }}>Club ID:</span>
@@ -965,7 +964,6 @@ export function AdminClubs() {
                 <strong style={{ color: 'var(--accent)' }}>{createdInfo.email}</strong>
                 <span style={{ color: '#8d8d97' }}>Password:</span>
                 <code>{createdInfo.password}</code>
-              </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 5 }}>
@@ -1229,7 +1227,7 @@ export function AdminEvents() {
               </Badge>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: 14, display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 14px', fontSize: 13 }}>
+            <div className="modal-detail-grid">
               <span style={{ color: '#8d8d97' }}>Category:</span>
               <strong>{selectedEvent.category}</strong>
 

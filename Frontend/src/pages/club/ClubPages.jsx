@@ -369,7 +369,7 @@ export function ClubDashboard() {
           </label>
 
           {/* Quick upload sections inside the modal */}
-          <div className="span-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <div className="span-2 responsive-two-col" style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
             <div>
               <span style={{ fontSize: 12, fontWeight: 500, color: '#aaaab3', display: 'block', marginBottom: 6 }}>
                 Club Logo
@@ -796,7 +796,7 @@ export function ClubProfile() {
             <span style={{ fontSize: 13, fontWeight: 600, color: '#eee', display: 'block', marginBottom: 12 }}>
               Visual Identity & Cloudinary Assets
             </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="responsive-two-col">
               {/* Logo control */}
               <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 14, background: 'rgba(255,255,255,0.02)' }}>
                 <span style={{ fontSize: 11, color: '#888894', display: 'block', marginBottom: 8 }}>Club Logo</span>
@@ -1805,7 +1805,7 @@ export function ClubMembers() {
       <div className="member-list">
         {list.length > 0 ? (
           list.map((m) => (
-            <article key={m.id} style={{ gridTemplateColumns: '44px minmax(220px, 2fr) auto auto auto', gap: 14 }}>
+            <article key={m.id} className="member-row">
               <Avatar name={m.name} src={m.avatar} />
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -1882,7 +1882,7 @@ export function ClubMembers() {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, display: 'grid', gridTemplateColumns: '130px 1fr', gap: '10px 14px', fontSize: 13 }}>
+            <div className="modal-detail-grid">
               <span style={{ color: '#8d8d97' }}>Student ID:</span>
               <strong style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>{selectedMember.studentId}</strong>
 

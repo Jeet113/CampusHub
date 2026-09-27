@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Menu, X, LayoutDashboard } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import Logo from './Logo'
@@ -16,6 +16,13 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const { user } = useAuth()
+
+  useEffect(() => {
+    if (!open) return
+    const handleKey = (e) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [open])
 
   const userAvatar = user?.profileImage || (user?.role === 'admin' ? '/admin-avatar.png' : user?.club?.logo)
   const dashboardPath = user ? `/${user.role}/dashboard` : '/login'
@@ -91,33 +98,40 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <nav className="mobile-menu" aria-label="Mobile navigation">
-          {links.map(([n, to]) => (
-            <NavLink onClick={() => setOpen(false)} key={to} to={to}>
-              {n}
-            </NavLink>
-          ))}
-          {user ? (
-            <Link
-              to={dashboardPath}
-              onClick={() => setOpen(false)}
-              className="mobile-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}
-            >
-              <Avatar name={user.name} src={userAvatar} role={user.role} size="sm" />
-              <span>Dashboard ({user.name})</span>
-            </Link>
-          ) : (
-            <>
-              <Link to="/login" onClick={() => setOpen(false)}>
-                Log in
+        <>
+          <button
+            className="drawer-scrim"
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+          />
+          <nav className="mobile-menu" aria-label="Mobile navigation">
+            {links.map(([n, to]) => (
+              <NavLink onClick={() => setOpen(false)} key={to} to={to}>
+                {n}
+              </NavLink>
+            ))}
+            {user ? (
+              <Link
+                to={dashboardPath}
+                onClick={() => setOpen(false)}
+                className="mobile-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}
+              >
+                <Avatar name={user.name} src={userAvatar} role={user.role} size="sm" />
+                <span>Dashboard ({user.name})</span>
               </Link>
-              <Link to="/register" onClick={() => setOpen(false)} className="mobile-primary">
-                Get started
-              </Link>
-            </>
-          )}
-        </nav>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setOpen(false)}>
+                  Log in
+                </Link>
+                <Link to="/register" onClick={() => setOpen(false)} className="mobile-primary">
+                  Get started
+                </Link>
+              </>
+            )}
+          </nav>
+        </>
       )}
     </header>
   )

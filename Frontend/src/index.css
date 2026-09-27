@@ -430,3 +430,522 @@
   font-family: inherit;
   padding: 6px 12px;
 }
+
+/* ==========================================================================
+   Comprehensive Mobile & Responsive Enhancements
+   ========================================================================== */
+
+/* Universal mobile containment & anti-overflow */
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Modal detail grid for structured information (Admin & Club modals) */
+.modal-detail-grid {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px 14px;
+  font-size: 13px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.modal-detail-grid code {
+  word-break: break-all;
+}
+
+/* Responsive two-column helper inside cards & modals */
+.responsive-two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+/* Member row styling in ClubMembers */
+.member-row {
+  display: grid;
+  grid-template-columns: 44px minmax(180px, 2fr) auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  transition: background 0.15s ease;
+}
+.member-row:last-child {
+  border-bottom: 0;
+}
+.member-row:hover {
+  background: rgba(26, 26, 36, 0.7);
+}
+
+/* Responsive adjustments for Breakpoint <= 960px (Tablets & Mobile) */
+@media (max-width: 960px) {
+  .member-row {
+    grid-template-columns: 40px 1.5fr auto auto;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+}
+
+/* Responsive adjustments for Breakpoint <= 880px (Public navigation transition) */
+@media (max-width: 880px) {
+  .desktop-nav,
+  .nav-actions {
+    display: none !important;
+  }
+  .menu-button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .public-nav {
+    height: 65px;
+  }
+  .mobile-menu {
+    display: flex;
+    position: absolute;
+    top: 65px;
+    left: 0;
+    right: 0;
+    background: rgba(15, 15, 22, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 20px;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 200;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+  }
+  .mobile-menu a {
+    min-height: 48px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    border-radius: 9px;
+    color: #c9c9d4;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .mobile-menu a:hover,
+  .mobile-menu a.active {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+  .mobile-menu .mobile-primary {
+    background: var(--accent) !important;
+    color: #0a0a0f !important;
+    justify-content: center;
+    margin-top: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+  }
+}
+
+/* Responsive adjustments for Breakpoint <= 840px (Club Dashboard header) */
+@media (max-width: 840px) {
+  .club-dash-cover {
+    height: 150px;
+  }
+  .club-dash-cover-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  .club-dash-cover-btn span {
+    display: none;
+  }
+  .club-dash-body {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 18px 22px;
+    align-items: flex-start;
+  }
+  .club-dash-logo-wrap {
+    margin-top: -38px;
+  }
+  .club-dash-title-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .club-dash-title-row h1 {
+    font-size: 22px;
+    width: 100%;
+  }
+  .club-dash-actions {
+    width: 100%;
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+  }
+  .club-dash-actions .btn,
+  .club-dash-actions a {
+    flex: 1;
+    width: 100%;
+  }
+  .club-dash-actions a .btn {
+    width: 100%;
+  }
+}
+
+/* Responsive adjustments for Breakpoint <= 768px */
+@media (max-width: 768px) {
+  /* Member list mobile card layout */
+  .member-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+  }
+  .member-list {
+    border: none;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .member-row>div:nth-child(2) {
+    width: 100%;
+  }
+  
+  /* Quick actions */
+  .quick-actions>div {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Status page */
+  .status-page {
+    padding: 70px 20px 40px;
+  }
+  .status-page .logo {
+    position: static;
+    margin-bottom: 24px;
+  }
+  .status-code {
+    font-size: clamp(80px, 18vw, 140px);
+  }
+  .status-page h1 {
+    font-size: clamp(22px, 5.5vw, 30px);
+  }
+
+  /* Table actions touch sizing */
+  .table-actions button {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Responsive adjustments for Breakpoint <= 600px */
+@media (max-width: 600px) {
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .section-head>a {
+    font-size: 12px;
+  }
+  
+  /* Admin chart scaling */
+  .admin-chart {
+    height: 220px;
+    padding: 16px 12px;
+    gap: 10px;
+  }
+  .chart-y {
+    font-size: 7px;
+    padding-bottom: 16px;
+  }
+  .chart-x {
+    font-size: 7px;
+  }
+  
+  /* Approval mini row */
+  .approval-mini article {
+    grid-template-columns: auto 1fr 32px 32px;
+    gap: 8px;
+    padding: 10px 8px;
+  }
+  .approval-mini article strong {
+    font-size: 12px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Feed row */
+  .feed-row>span:nth-child(2) {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .feed-row strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Responsive adjustments for Breakpoint <= 480px (Smartphones) */
+@media (max-width: 480px) {
+  .container {
+    width: calc(100% - 24px);
+  }
+  .dashboard-content {
+    padding: 20px 12px 55px;
+  }
+  .app-header {
+    height: 58px;
+    padding-inline: 12px;
+  }
+  .page-header h1 {
+    font-size: 24px;
+  }
+  
+  /* Profile header identity */
+  .profile-identity {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .profile-identity>div:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Modal responsive padding & footer stacking */
+  .modal {
+    max-height: calc(100vh - 20px);
+    border-radius: 12px;
+  }
+  .modal>header {
+    min-height: 54px;
+    padding: 0 16px;
+  }
+  .modal h2 {
+    font-size: 16px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .modal-body {
+    padding: 16px;
+  }
+  .modal>footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .modal>footer .btn,
+  .modal>footer button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Modal detail grid */
+  .modal-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px;
+  }
+  
+  /* Hero title & actions */
+  .hero h1 {
+    font-size: clamp(30px, 8vw, 38px);
+    line-height: 1.05;
+  }
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+  .hero-actions a,
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .hero-trust {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  /* Detail actions in Event Details */
+  .detail-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .detail-actions .btn:first-child {
+    width: 100%;
+  }
+  .detail-actions button,
+  .detail-actions a {
+    flex: 1;
+  }
+  .detail-actions a .btn {
+    width: 100%;
+  }
+
+  /* Event Landscape Cover */
+  .event-landscape-cover {
+    height: 180px;
+  }
+  .event-landscape-body {
+    padding: 18px 14px 22px;
+  }
+  .event-landscape-top-badges {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+  }
+  .event-landscape-header h1 {
+    font-size: 22px;
+  }
+
+  /* Featured event */
+  .featured-event {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .event-art.has-banner {
+    display: block !important;
+    height: 160px;
+    width: 100%;
+    border-left: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .featured-event>div:first-child {
+    padding: 20px 16px;
+  }
+  .featured-event h2 {
+    font-size: 20px;
+  }
+  
+  /* OTP digit inputs */
+  .otp-inputs-row {
+    gap: 6px;
+  }
+  .otp-digit-input {
+    width: calc((100% - 30px) / 6);
+    min-width: 36px;
+    max-width: 48px;
+    height: 50px;
+    font-size: 20px;
+    border-radius: 8px;
+  }
+  .otp-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    text-align: center;
+  }
+  .otp-actions-row button {
+    justify-content: center;
+  }
+
+  /* Role tabs in login */
+  .role-tabs button {
+    font-size: 11px;
+    padding: 0 2px;
+  }
+
+  /* Date & time picker popovers */
+  .custom-calendar-popover,
+  .custom-timer-popover {
+    max-width: calc(100vw - 24px);
+    width: 295px;
+    padding: 12px;
+  }
+  .calendar-day-btn {
+    width: 33px;
+    height: 33px;
+    font-size: 12px;
+  }
+  .timer-columns-container {
+    grid-template-columns: 1fr 1fr 62px;
+    gap: 6px;
+  }
+  
+  /* Quick actions */
+  .quick-actions>div {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Stats grid */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 12px;
+    min-height: 115px;
+  }
+  .stat-card>strong {
+    font-size: 22px;
+    margin: 10px 0 2px;
+  }
+  .stat-card .mono-label {
+    font-size: 8px;
+  }
+
+  /* CTA card */
+  .cta-card {
+    padding: 26px 16px;
+    border-radius: 14px;
+  }
+  .cta-card h2 {
+    font-size: 24px;
+  }
+  .cta-card .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+/* Responsive adjustments for Breakpoint <= 360px (Very small phones e.g. iPhone SE 1st gen) */
+@media (max-width: 360px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .otp-digit-input {
+    min-width: 32px;
+    height: 44px;
+    font-size: 17px;
+  }
+  .custom-calendar-popover,
+  .custom-timer-popover {
+    width: 275px;
+    padding: 10px;
+  }
+  .calendar-day-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+  .timer-columns-container {
+    grid-template-columns: 1fr 1fr 55px;
+  }
+}
+
