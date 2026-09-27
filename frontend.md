@@ -165,7 +165,7 @@ function Guard({ role, children }) {
 - **Pre-Configured Demo Credentials**:
   - Student: `student@campushub.local` / `student123`
   - Club: `club@campushub.local` / `club123`
-  - Admin: `admin@campushub.local` / `admin123`
+  - Admin: `admin@campushub.com` / `admincampushub`
 
 ### 2. `ToastContext` (`src/components/common/Toast.jsx`)
 - **State**: List of active toast objects `{ id, message }`.

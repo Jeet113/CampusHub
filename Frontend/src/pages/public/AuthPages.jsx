@@ -7,11 +7,120 @@ import Input from '../../components/common/Input'
 import { useAuth } from '../../hooks/useAuth'
 import { useToast } from '../../components/common/Toast'
 import { api } from '../../services/api'
-import { credentials } from '../../data/mockData'
 
 function AuthShell({ children, asideTitle = 'Campus life, in focus.', asideText = 'One calm place to discover, participate, and stay connected.' }) { return <div className="auth-page"><aside><Link to="/" className="auth-back"><ArrowLeft size={18} /> Back home</Link><div><span className="auth-emblem"><GraduationCap /></span><h2>{asideTitle}</h2><p>{asideText}</p><blockquote>"CampusHub made it much easier to find the communities and events that made university feel like home."</blockquote><small>— Nafisa Rahman, EEE '27</small></div></aside><main><div className="auth-mobile-logo"><Logo /></div>{children}</main></div> }
 
-export function Login() { const { user, login } = useAuth(); const nav = useNavigate(); const [role, setRole] = useState('student'); const [email, setEmail] = useState(credentials.student?.email || ''); const [password, setPassword] = useState(credentials.student?.password || ''); const [show, setShow] = useState(false); const [error, setError] = useState(''); const [loading, setLoading] = useState(false); if (user) return <Navigate to={`/${user.role}/dashboard`} replace />; const pick = r => { setRole(r); setEmail(credentials[r]?.email || ''); setPassword(credentials[r]?.password || ''); setError('') }; const submit = async e => { e.preventDefault(); setLoading(true); setError(''); const res = await login({ email, password }); setLoading(false); if (res.ok) nav(`/${res.user.role}/dashboard`); else setError(res.error) }; return <AuthShell><div className="auth-form-wrap"><p className="eyebrow">Welcome back</p><h1>Sign in to CampusHub</h1><p className="auth-intro">Choose a role to use its ready-made demo account.</p><div className="role-tabs">{['student', 'club', 'admin'].map(r => <button key={r} className={role === r ? 'active' : ''} onClick={() => pick(r)}>{r === 'club' ? 'Organization' : r}</button>)}</div><form onSubmit={submit}><Input label="Email address" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required /><label className="field"><span>Password</span><div className="password-field"><input name="password" type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required /><button type="button" onClick={() => setShow(v => !v)} aria-label={show ? 'Hide password' : 'Show password'}>{show ? <EyeOff /> : <Eye />}</button></div></label><div className="form-row"><label className="check"><input type="checkbox" defaultChecked /><span>Remember me</span></label><Link to="/forgot-password">Forgot password?</Link></div>{error && <div className="form-error" role="alert">{error}</div>}<Button type="submit" className="full" disabled={loading}>{loading ? 'Signing in…' : <>Sign in <ArrowRight size={18} /></>}</Button></form><p className="auth-switch">New to CampusHub? <Link to="/register">Create an account</Link></p><div className="demo-note"><Check size={16} /><span>Demo credentials are filled automatically when you switch roles.</span></div></div></AuthShell> }
+export function Login() {
+  const { user, login } = useAuth()
+  const nav = useNavigate()
+  const [role, setRole] = useState('student')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [show, setShow] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  if (user) return <Navigate to={`/${user.role}/dashboard`} replace />
+
+  const pick = (r) => {
+    setRole(r)
+    setError('')
+  }
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const res = await login({ email, password })
+    setLoading(false)
+    if (res.ok) nav(`/${res.user.role}/dashboard`)
+    else setError(res.error)
+  }
+
+  return (
+    <AuthShell>
+      <div className="auth-form-wrap">
+        <p className="eyebrow">Welcome back</p>
+        <h1>Sign in to CampusHub</h1>
+        <p className="auth-intro">Select your account type and sign in to continue.</p>
+
+        <div className="role-tabs">
+          {['student', 'club', 'admin'].map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={role === r ? 'active' : ''}
+              onClick={() => pick(r)}
+            >
+              {r === 'club' ? 'Organization' : r}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={submit}>
+          <Input
+            label="Email address"
+            name="email"
+            type="email"
+            placeholder={
+              role === 'student'
+                ? 'you@student.cuet.ac.bd'
+                : role === 'club'
+                ? 'club@cuet.ac.bd'
+                : 'admin@campushub.com'
+            }
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <label className="field">
+            <span>Password</span>
+            <div className="password-field">
+              <input
+                name="password"
+                type={show ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShow((v) => !v)}
+                aria-label={show ? 'Hide password' : 'Show password'}
+              >
+                {show ? <EyeOff /> : <Eye />}
+              </button>
+            </div>
+          </label>
+
+          <div className="form-row">
+            <label className="check">
+              <input type="checkbox" defaultChecked />
+              <span>Remember me</span>
+            </label>
+            <Link to="/forgot-password">Forgot password?</Link>
+          </div>
+
+          {error && (
+            <div className="form-error" role="alert">
+              {error}
+            </div>
+          )}
+
+          <Button type="submit" className="full" disabled={loading}>
+            {loading ? 'Signing in…' : <>Sign in <ArrowRight size={18} /></>}
+          </Button>
+        </form>
+
+        <p className="auth-switch">
+          New to CampusHub? <Link to="/register">Create an account</Link>
+        </p>
+      </div>
+    </AuthShell>
+  )
+}
 
 export function Register() {
   const { register } = useAuth()

@@ -6,28 +6,28 @@ export const assetSchema = new mongoose.Schema(
       type: String,
       trim: true,
       get(v) {
-        return v || this.url
+        return v || this.get?.('url', null, { getters: false }) || undefined
       },
     },
     url: {
       type: String,
       trim: true,
       get(v) {
-        return v || this.imageUrl
+        return v || this.get?.('imageUrl', null, { getters: false }) || undefined
       },
     },
     cloudinaryPublicId: {
       type: String,
       trim: true,
       get(v) {
-        return v || this.publicId
+        return v || this.get?.('publicId', null, { getters: false }) || undefined
       },
     },
     publicId: {
       type: String,
       trim: true,
       get(v) {
-        return v || this.cloudinaryPublicId
+        return v || this.get?.('cloudinaryPublicId', null, { getters: false }) || undefined
       },
     },
     resourceType: { type: String, enum: ['image', 'raw'], default: 'image' },

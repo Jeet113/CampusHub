@@ -79,8 +79,8 @@ async function seed() {
 
   const admin = await User.create({
     name: 'CampusHub Administrator',
-    email: 'admin@campushub.local',
-    password: env.SEED_PASSWORD,
+    email: 'admin@campushub.com',
+    password: 'admincampushub',
     role: 'admin',
     studentId: 'ADM-001',
     department: 'Student Affairs',
@@ -183,7 +183,7 @@ async function seed() {
   })
 
   console.log('Development database seeded successfully.')
-  console.log('Seed accounts: admin@campushub.local, club@campushub.local, student@campushub.local')
+  console.log('Seed accounts: admin@campushub.com, club@campushub.local, student@campushub.local')
   console.log('All seed accounts use the SEED_PASSWORD value from the root .env.')
 }
 

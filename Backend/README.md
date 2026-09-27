@@ -98,9 +98,7 @@ npm run seed
 
 It recreates development data: 1 admin, 2 club users, 6 students, 6 clubs, 10 events, and 10 notices. Representative logins are:
 
-- `admin@campushub.local`
-- `club@campushub.local`
-- `student@campushub.local`
+
 
 All use the root `SEED_PASSWORD`; the password is not hard-coded or printed.
 
