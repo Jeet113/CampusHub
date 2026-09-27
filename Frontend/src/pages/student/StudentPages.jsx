@@ -47,7 +47,8 @@ export function StudentDashboard(){
 
   if (dl && !dashboard) return <LoadingState />;
 
-  const eventsVal = stats.upcomingEvents ?? evts.length;
+  const upcomingVal = stats.upcomingEvents ?? 0;
+  const totalEventsVal = stats.totalEvents ?? (stats.upcomingEvents ?? evts.length);
   const clubsVal = stats.clubs ?? clbs.length;
   const noticesVal = stats.notices ?? ntcs.length;
   const notifsVal = stats.unreadNotifications ?? 0;
@@ -61,7 +62,12 @@ export function StudentDashboard(){
         actions={<Link to="/student/events"><Button>Explore campus <ArrowRight size={17}/></Button></Link>}
       />
       <div className="stats-grid">
-        <StatCard icon={CalendarDays} label="Upcoming events" value={String(eventsVal).padStart(2,'0')} detail="Browse events"/>
+        <StatCard
+          icon={CalendarDays}
+          label="Upcoming events"
+          value={String(upcomingVal).padStart(2,'0')}
+          detail={`${totalEventsVal} total events`}
+        />
         <StatCard icon={Building2} label="Clubs" value={String(clubsVal).padStart(2,'0')} detail="Explore clubs"/>
         <StatCard icon={Bell} label="Notices" value={String(noticesVal).padStart(2,'0')} detail="Latest updates"/>
         <StatCard icon={Bookmark} label="Notifications" value={String(notifsVal).padStart(2,'0')} detail="Recent activity"/>
@@ -103,7 +109,45 @@ export function StudentDashboard(){
               )}
             </div>
           ) : (
-            <p style={{padding:'1rem',opacity:.6}}>No upcoming events.</p>
+            <div
+              className="featured-event empty-featured"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '2rem',
+                borderRadius: '16px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px dashed var(--border, rgba(255, 255, 255, 0.1))',
+              }}
+            >
+              <div style={{ maxWidth: 440 }}>
+                <Badge tone="neutral">All events concluded</Badge>
+                <h3 style={{ margin: '10px 0 6px', fontSize: '1.25rem', fontWeight: 600 }}>No upcoming events scheduled</h3>
+                <p className="muted-copy" style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.5 }}>
+                  All campus events have concluded. Check back soon for new club activities and competitions.
+                </p>
+                <div style={{ marginTop: 16 }}>
+                  <Link to="/student/events">
+                    <Button variant="secondary" size="sm">Browse {totalEventsVal} past events <ArrowRight size={15}/></Button>
+                  </Link>
+                </div>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 64,
+                  height: 64,
+                  borderRadius: 16,
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  color: 'var(--accent, #F59E0B)',
+                }}
+              >
+                <CalendarDays size={30} />
+              </div>
+            </div>
           )}
         </section>
         <section>

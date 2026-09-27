@@ -58,8 +58,12 @@ export async function getStudentDashboard(userId) {
   const user = await User.findById(userId)
   if (!user) throw new ApiError(404, 'User not found')
 
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
   const [
-    eventsCount,
+    totalEventsCount,
+    upcomingEventsCount,
     clubsCount,
     noticesCount,
     unreadNotifsCount,
@@ -71,6 +75,7 @@ export async function getStudentDashboard(userId) {
     upcomingCampusEvents,
   ] = await Promise.all([
     Event.countDocuments({ status: { $in: ['published', 'ended'] } }),
+    Event.countDocuments({ status: 'published', date: { $gte: todayStart } }),
     Club.countDocuments({ status: { $ne: 'suspended' } }),
     Notice.countDocuments({ status: 'published' }),
     Notification.countDocuments({ recipient: userId, read: false }),
@@ -91,7 +96,7 @@ export async function getStudentDashboard(userId) {
       })
       .sort({ createdAt: -1 })
       .limit(5),
-    Event.find({ status: 'published' })
+    Event.find({ status: 'published', date: { $gte: todayStart } })
       .populate('club', 'name slug logo status')
       .sort({ date: 1, startTime: 1 })
       .limit(5),
@@ -101,18 +106,18 @@ export async function getStudentDashboard(userId) {
   let isRegistered = false
   let badge = 'Featured event'
 
-  const validRegisteredEvents = studentRegistrations
+  const upcomingRegisteredEvents = studentRegistrations
     .map((r) => r.event)
-    .filter((e) => e && ['published', 'ended'].includes(e.status))
+    .filter((e) => e && e.status === 'published' && new Date(e.date) >= todayStart)
 
-  if (validRegisteredEvents.length > 0) {
-    featuredEvent = validRegisteredEvents[0]
+  if (upcomingRegisteredEvents.length > 0) {
+    featuredEvent = upcomingRegisteredEvents[0]
     isRegistered = true
     badge = 'Your registered event'
   } else if (upcomingCampusEvents.length > 0) {
     featuredEvent = upcomingCampusEvents[0]
     isRegistered = false
-    badge = 'Upcoming event'
+    badge = 'Upcoming campus event'
   }
 
   const featuredObj = featuredEvent
@@ -125,7 +130,9 @@ export async function getStudentDashboard(userId) {
 
   return {
     stats: {
-      upcomingEvents: eventsCount,
+      upcomingEvents: upcomingEventsCount,
+      totalEvents: totalEventsCount,
+      endedEvents: totalEventsCount - upcomingEventsCount,
       clubs: clubsCount,
       notices: noticesCount,
       unreadNotifications: unreadNotifsCount,
