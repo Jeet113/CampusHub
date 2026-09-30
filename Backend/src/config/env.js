@@ -35,10 +35,12 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: optionalText,
   CLOUDINARY_API_SECRET: optionalText,
   CLOUDINARY_URL: optionalText,
-  CLIENT_URL: z.string().url().default('http://localhost:5173'),
+  CLIENT_URL: z.string().default('http://localhost:5173'),
   SEED_PASSWORD: optionalText,
   EMAIL_USER: optionalText,
   EMAIL_PASS: optionalText,
+  GEMINI_API_KEY: optionalText,
+  GEMINI_MODEL: z.string().trim().default('gemini-3.5-flash-lite'),
 })
 
 let cachedEnv

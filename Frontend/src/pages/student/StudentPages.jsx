@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { CalendarDays, Building2, Bell, Bookmark, ArrowRight, MapPin, Clock, Users, Share2, Check, Pencil, Lock, Mail, GraduationCap, Award, Filter, X, Camera, Upload } from 'lucide-react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { CalendarDays, Building2, Bell, Bookmark, ArrowRight, MapPin, Clock, Users, Share2, Check, Pencil, Lock, Mail, GraduationCap, Award, Filter, X, Camera, Upload, Bot, Sparkles, User as UserIcon } from 'lucide-react'
+import CampusHubAI from '../../components/ai/CampusHubAI'
 import PageHeader from '../../components/layout/PageHeader'
 import StatCard from '../../components/dashboard/StatCard'
 import EventGrid from '../../components/events/EventGrid'
@@ -59,7 +60,19 @@ export function StudentDashboard(){
         eyebrow={`${dayName} · ${dateStr}`}
         title={`${greeting}, ${firstName}.`}
         description="Here's what's happening around your campus."
-        actions={<Link to="/student/events"><Button>Explore campus <ArrowRight size={17}/></Button></Link>}
+        actions={
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/student/profile?tab=ai">
+              <Button variant="secondary" className="ai-dash-btn">
+                <Sparkles size={16} className="ai-btn-sparkle" />
+                <span>CampusHub AI</span>
+              </Button>
+            </Link>
+            <Link to="/student/events">
+              <Button>Explore campus <ArrowRight size={17}/></Button>
+            </Link>
+          </div>
+        }
       />
       <div className="stats-grid">
         <StatCard
@@ -162,6 +175,25 @@ export function StudentDashboard(){
           />
         </section>
       </div>
+
+      <div className="dash-ai-banner">
+        <div className="dash-ai-banner-left">
+          <div className="dash-ai-banner-icon">
+            <Bot size={24} />
+            <span className="online-indicator" />
+          </div>
+          <div>
+            <h4>CampusHub AI Assistant</h4>
+            <p>Need help finding events, joining clubs, or exploring campus features? Ask your 24/7 AI companion.</p>
+          </div>
+        </div>
+        <Link to="/student/profile?tab=ai">
+          <Button variant="primary" size="sm" className="dash-ai-banner-btn">
+            <Sparkles size={15} /> Ask CampusHub AI <ArrowRight size={15} />
+          </Button>
+        </Link>
+      </div>
+
       <section className="dash-section">
         <SectionHead title="Recommended clubs" link="/student/clubs"/>
         <div className="mini-club-grid">
@@ -179,8 +211,14 @@ export function StudentDashboard(){
       </section>
       <section className="quick-actions">
         <p className="eyebrow">Quick actions</p>
-        <div>
-          {[[CalendarDays,'Explore events','/student/events'],[Building2,'Find clubs','/student/clubs'],[Bell,'View notices','/student/notices'],[Pencil,'Edit profile','/student/profile']].map(([Icon,label,to])=><Link to={to} key={label}><Icon/><span>{label}</span><ArrowRight/></Link>)}
+        <div style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+          {[
+            [Sparkles,'CampusHub AI','/student/profile?tab=ai'],
+            [CalendarDays,'Explore events','/student/events'],
+            [Building2,'Find clubs','/student/clubs'],
+            [Bell,'View notices','/student/notices'],
+            [Pencil,'Edit profile','/student/profile'],
+          ].map(([Icon,label,to])=><Link to={to} key={label}><Icon/><span>{label}</span><ArrowRight/></Link>)}
         </div>
       </section>
       <Modal
@@ -380,6 +418,12 @@ export function StudentProfile(){
   const {toast}=useToast();
   const {user,updateUser}=useAuth();
   const {data:dashboard}=useApi(user?'/users/me/dashboard':null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'ai' ? 'ai' : 'profile';
+  const setActiveTab = (tab) => {
+    if (tab === 'ai') setSearchParams({ tab: 'ai' });
+    else setSearchParams({});
+  };
   const [uploading,setUploading]=useState(false);
   const [editModal,setEditModal]=useState(false);
   const [passwordModal,setPasswordModal]=useState(false);
@@ -479,7 +523,250 @@ export function StudentProfile(){
     }
   };
 
-  return <><PageHeader eyebrow="Your account" title="Profile" description="Your academic identity and CampusHub activity." actions={<Button onClick={()=>setEditModal(true)}><Pencil size={17}/> Edit profile</Button>}/><div className="profile-grid"><section className="profile-main"><div className="profile-identity"><div style={{position:'relative',display:'inline-block'}}><Avatar name={user.name} size="xl" src={user.profileImage}/><button type="button" onClick={()=>fileInputRef.current?.click()} disabled={uploading} title="Upload profile photo" aria-label="Upload profile photo" style={{position:'absolute',bottom:-4,right:-4,width:32,height:32,borderRadius:'50%',background:'var(--accent)',color:'#0a0a0f',border:'2px solid #121219',display:'flex',alignItems:'center',justifyContent:'center',cursor:uploading?'not-allowed':'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.4)'}}>{uploading?<span style={{display:'inline-block',width:14,height:14,border:'2px solid #000',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>:<Camera size={16}/>}</button><input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/jpg" onChange={handleAvatarSelect} style={{display:'none'}}/></div><div><h2>{user.name}</h2><p>{user.department||'Campus Student'}</p><div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}><Badge tone="amber">Active {user.role}</Badge><button type="button" onClick={()=>fileInputRef.current?.click()} disabled={uploading} style={{background:'none',border:'none',color:'var(--accent)',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',gap:5,padding:0,textDecoration:'underline'}}><Upload size={13}/> {uploading?'Uploading to Cloudinary…':user.profileImage?.url?'Change photo':'Upload photo'}</button></div></div></div><div className="info-grid"><Info icon={GraduationCap} label="Student ID" value={user.studentId||'—'}/><Info icon={Mail} label="University email" value={user.email}/><Info icon={Building2} label="Department" value={user.department||'—'}/><Info icon={Award} label="Batch / Year" value={user.batch||'—'}/></div><div className="profile-about"><h3>About</h3><p>{user.bio||'No bio added yet. Click "Edit profile" to share your interests.'}</p></div></section><aside className="profile-aside"><h3>Campus activity</h3><div><strong>{dashboard?.stats?.joinedClubs ?? 0}</strong><span>Joined clubs</span></div><div><strong>{dashboard?.stats?.registeredEvents ?? 0}</strong><span>Events attended</span></div><div><strong>{dashboard?.stats?.savedEvents ?? user?.savedEvents?.length ?? 0}</strong><span>Saved events</span></div><Button variant="secondary" className="full" onClick={()=>setPasswordModal(true)}><Lock size={17}/> Change password</Button></aside></div><Modal open={editModal} onClose={()=>setEditModal(false)} title="Edit profile details"><form onSubmit={handleEditSubmit} className="form-grid" style={{marginTop:15}}><Input label="Full name" name="name" defaultValue={user.name} required/><label className="field"><span>Department</span><select name="department" defaultValue={user.department||''}><option value="">Select Department</option>{DEPARTMENTS.map(d=><option key={d.value} value={d.value}>{d.label} ({d.value})</option>)}</select></label><Input label="Batch" name="batch" defaultValue={user.batch||''} placeholder="e.g. 2023-24"/><Input label="Phone number" name="phone" defaultValue={user.phone||''} placeholder="e.g. +880 1700-000000"/><label className="field span-2"><span>Bio</span><textarea name="bio" rows="4" defaultValue={user.bio||''} placeholder="Tell campus about yourself..."/></label><div className="span-2" style={{display:'flex',justifyContent:'flex-end',gap:10,marginTop:10}}><Button variant="ghost" type="button" onClick={()=>setEditModal(false)}>Cancel</Button><Button type="submit" disabled={editLoading}>{editLoading?'Saving…':'Save changes'}</Button></div></form></Modal><Modal open={passwordModal} onClose={()=>setPasswordModal(false)} title="Change password"><form onSubmit={handlePasswordSubmit} style={{display:'flex',flexDirection:'column',gap:14,marginTop:15}}><Input label="Current password" name="currentPassword" type="password" required/><Input label="New password" name="newPassword" type="password" minLength="8" required/><Input label="Confirm new password" name="confirmPassword" type="password" minLength="8" required/>{passwordError&&<div className="form-error" role="alert">{passwordError}</div>}<div style={{display:'flex',justifyContent:'flex-end',gap:10,marginTop:10}}><Button variant="ghost" type="button" onClick={()=>setPasswordModal(false)}>Cancel</Button><Button type="submit" disabled={passwordLoading}>{passwordLoading?'Updating…':'Update password'}</Button></div></form></Modal></>}
+  return (
+    <>
+      <PageHeader
+        eyebrow="Your account"
+        title={activeTab === 'ai' ? 'CampusHub AI' : 'Profile'}
+        description={
+          activeTab === 'ai'
+            ? 'Your 24/7 intelligent campus assistant personalized for your university journey.'
+            : 'Your academic identity and CampusHub activity.'
+        }
+        actions={
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {activeTab === 'profile' ? (
+              <>
+                <Button variant="secondary" onClick={() => setActiveTab('ai')}>
+                  <Sparkles size={16} style={{ color: 'var(--accent)' }} /> CampusHub AI
+                </Button>
+                <Button onClick={() => setEditModal(true)}>
+                  <Pencil size={17} /> Edit profile
+                </Button>
+              </>
+            ) : (
+              <Button variant="secondary" onClick={() => setActiveTab('profile')}>
+                <UserIcon size={16} /> View Profile
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      <div className="profile-subnav">
+        <button
+          type="button"
+          className={`profile-subnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+          onClick={() => setActiveTab('profile')}
+        >
+          <UserIcon size={16} />
+          <span>Profile Details</span>
+        </button>
+        <button
+          type="button"
+          className={`profile-subnav-btn ai-subnav ${activeTab === 'ai' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ai')}
+        >
+          <Sparkles size={16} />
+          <span>CampusHub AI</span>
+          <span className="subnav-pill">Assistant</span>
+        </button>
+      </div>
+
+      {activeTab === 'ai' ? (
+        <CampusHubAI />
+      ) : (
+        <div className="profile-grid">
+          <section className="profile-main">
+            <div className="profile-identity">
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <Avatar name={user.name} size="xl" src={user.profileImage} />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  title="Upload profile photo"
+                  aria-label="Upload profile photo"
+                  style={{
+                    position: 'absolute',
+                    bottom: -4,
+                    right: -4,
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: 'var(--accent)',
+                    color: '#0a0a0f',
+                    border: '2px solid #121219',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: uploading ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  {uploading ? (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 14,
+                        height: 14,
+                        border: '2px solid #000',
+                        borderTopColor: 'transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite',
+                      }}
+                    />
+                  ) : (
+                    <Camera size={16} />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/jpg"
+                  onChange={handleAvatarSelect}
+                  style={{ display: 'none' }}
+                />
+              </div>
+              <div>
+                <h2>{user.name}</h2>
+                <p>{user.department || 'Campus Student'}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <Badge tone="amber">Active {user.role}</Badge>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--accent)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      padding: 0,
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    <Upload size={13} />{' '}
+                    {uploading
+                      ? 'Uploading to Cloudinary…'
+                      : user.profileImage?.url
+                        ? 'Change photo'
+                        : 'Upload photo'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="info-grid">
+              <Info icon={GraduationCap} label="Student ID" value={user.studentId || '—'} />
+              <Info icon={Mail} label="University email" value={user.email} />
+              <Info icon={Building2} label="Department" value={user.department || '—'} />
+              <Info icon={Award} label="Batch / Year" value={user.batch || '—'} />
+            </div>
+
+            <div className="profile-about">
+              <h3>About</h3>
+              <p>{user.bio || 'No bio added yet. Click "Edit profile" to share your interests.'}</p>
+            </div>
+          </section>
+
+          <aside className="profile-aside">
+            <h3>Campus activity</h3>
+            <div>
+              <strong>{dashboard?.stats?.joinedClubs ?? 0}</strong>
+              <span>Joined clubs</span>
+            </div>
+            <div>
+              <strong>{dashboard?.stats?.registeredEvents ?? 0}</strong>
+              <span>Events attended</span>
+            </div>
+            <div>
+              <strong>{dashboard?.stats?.savedEvents ?? user?.savedEvents?.length ?? 0}</strong>
+              <span>Saved events</span>
+            </div>
+            <Button variant="secondary" className="full" onClick={() => setPasswordModal(true)}>
+              <Lock size={17} /> Change password
+            </Button>
+
+            <div className="profile-ai-cta-card">
+              <div className="profile-ai-cta-top">
+                <div className="profile-ai-cta-badge">
+                  <Bot size={18} />
+                </div>
+                <div>
+                  <h4>CampusHub AI</h4>
+                  <p>Have questions about campus?</p>
+                </div>
+              </div>
+              <p className="profile-ai-cta-desc">
+                Get instant answers about upcoming events, club memberships, notices, and academic tools.
+              </p>
+              <Button variant="primary" className="full" onClick={() => setActiveTab('ai')}>
+                <Sparkles size={15} /> Launch CampusHub AI
+              </Button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      <Modal open={editModal} onClose={() => setEditModal(false)} title="Edit profile details">
+        <form onSubmit={handleEditSubmit} className="form-grid" style={{ marginTop: 15 }}>
+          <Input label="Full name" name="name" defaultValue={user.name} required />
+          <label className="field">
+            <span>Department</span>
+            <select name="department" defaultValue={user.department || ''}>
+              <option value="">Select Department</option>
+              {DEPARTMENTS.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label} ({d.value})
+                </option>
+              ))}
+            </select>
+          </label>
+          <Input label="Batch" name="batch" defaultValue={user.batch || ''} placeholder="e.g. 2023-24" />
+          <Input label="Phone number" name="phone" defaultValue={user.phone || ''} placeholder="e.g. +880 1700-000000" />
+          <label className="field span-2">
+            <span>Bio</span>
+            <textarea name="bio" rows="4" defaultValue={user.bio || ''} placeholder="Tell campus about yourself..." />
+          </label>
+          <div className="span-2" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
+            <Button variant="ghost" type="button" onClick={() => setEditModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={editLoading}>
+              {editLoading ? 'Saving…' : 'Save changes'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={passwordModal} onClose={() => setPasswordModal(false)} title="Change password">
+        <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 15 }}>
+          <Input label="Current password" name="currentPassword" type="password" required />
+          <Input label="New password" name="newPassword" type="password" minLength="8" required />
+          <Input label="Confirm new password" name="confirmPassword" type="password" minLength="8" required />
+          {passwordError && (
+            <div className="form-error" role="alert">
+              {passwordError}
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
+            <Button variant="ghost" type="button" onClick={() => setPasswordModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={passwordLoading}>
+              {passwordLoading ? 'Updating…' : 'Update password'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </>
+  )
+}
 function Info({icon:Icon,label,value}){return <div className="info-item"><Icon/><span>{label}<strong>{value}</strong></span></div>}
 
 export function StudentNotifications(){const {data:raw,loading,refetch}=useApi('/notifications');const [items,setItems]=useState([]);const notifs=items.length?items:(raw||[]).map(n=>({...n,id:n._id,text:n.message,time:fmt(n.createdAt),unread:!n.read}));const mark=async()=>{try{await api.patch('/notifications/read-all');setItems(notifs.map(x=>({...x,unread:false})));refetch()}catch{}};if(loading)return <LoadingState/>;return <><PageHeader eyebrow="Inbox" title="Notifications" description={`${notifs.filter(x=>x.unread).length} unread updates from your campus.`} actions={<Button variant="secondary" onClick={mark}>Mark all as read</Button>}/><div className="notification-list">{notifs.map(n=><button key={n.id} className={n.unread?'unread':''} onClick={async()=>{try{await api.patch(`/notifications/${n.id}/read`);setItems(prev=>(prev.length?prev:notifs).map(x=>x.id===n.id?{...x,unread:false}:x))}catch{}}}><i/><div><strong>{n.title}</strong><p>{n.text}</p><time>{n.time}</time></div><ArrowRight/></button>)}</div></>}

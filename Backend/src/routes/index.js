@@ -8,6 +8,7 @@ import noticeRoutes from './notice.routes.js'
 import notificationRoutes from './notification.routes.js'
 import searchRoutes from './search.routes.js'
 import userRoutes from './user.routes.js'
+import aiRoutes from './ai.routes.js'
 
 const router = Router()
 router.get('/health', health)
@@ -19,5 +20,6 @@ router.use('/notices', noticeRoutes)
 router.use('/notifications', notificationRoutes)
 router.use('/admin', adminRoutes)
 router.use('/search', searchRoutes)
+router.use('/ai', aiRoutes)
 
 export default router

@@ -25,7 +25,10 @@ import {
   Mail,
   GraduationCap,
   UserMinus,
+  Bot,
+  User as UserIcon,
 } from 'lucide-react'
+import CampusHubAI from '../../components/ai/CampusHubAI'
 import PageHeader from '../../components/layout/PageHeader'
 import StatCard from '../../components/dashboard/StatCard'
 import Button from '../../components/common/Button'
@@ -684,6 +687,7 @@ export function ClubProfile() {
   const { user, updateUser } = useAuth()
   const { data: club, loading, refetch } = useApi(user?.club ? `/clubs/${user.club}` : null)
   const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'ai' ? 'ai' : 'profile'))
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [accent, setAccent] = useState('#F59E0B')
@@ -764,16 +768,58 @@ export function ClubProfile() {
     <>
       <PageHeader
         eyebrow="Organization"
-        title="Club profile & brand"
-        description="Keep your public identity, logo, banner, and community details current."
+        title={activeTab === 'ai' ? 'CampusHub AI Assistant' : 'Club profile & brand'}
+        description={
+          activeTab === 'ai'
+            ? 'Your 24/7 intelligent campus assistant for event planning, student engagement, and campus guidelines.'
+            : 'Keep your public identity, logo, banner, and community details current.'
+        }
         actions={
-          <Link to={`/student/clubs/${c.slug || c._id || user?.club}`}>
-            <Button variant="secondary">
-              <Eye size={17} /> View public page
-            </Button>
-          </Link>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {activeTab === 'profile' ? (
+              <>
+                <Button variant="secondary" onClick={() => setActiveTab('ai')}>
+                  <Sparkles size={16} style={{ color: 'var(--accent)' }} /> CampusHub AI
+                </Button>
+                <Link to={`/student/clubs/${c.slug || c._id || user?.club}`}>
+                  <Button variant="secondary">
+                    <Eye size={17} /> View public page
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Button variant="secondary" onClick={() => setActiveTab('profile')}>
+                <UserIcon size={16} /> Club Brand & Profile
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <div className="profile-subnav">
+        <button
+          type="button"
+          className={`profile-subnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+          onClick={() => setActiveTab('profile')}
+        >
+          <UserIcon size={16} />
+          <span>Brand & Details</span>
+        </button>
+        <button
+          type="button"
+          className={`profile-subnav-btn ai-subnav ${activeTab === 'ai' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ai')}
+        >
+          <Sparkles size={16} />
+          <span>CampusHub AI</span>
+          <span className="subnav-pill">Assistant</span>
+        </button>
+      </div>
+
+      {activeTab === 'ai' ? (
+        <CampusHubAI />
+      ) : (
+        <>
 
       <input
         ref={logoInputRef}
@@ -903,8 +949,28 @@ export function ClubProfile() {
               </Button>
             </Link>
           </div>
+
+          <div className="profile-ai-cta-card">
+            <div className="profile-ai-cta-top">
+              <div className="profile-ai-cta-badge">
+                <Bot size={18} />
+              </div>
+              <div>
+                <h4>CampusHub AI</h4>
+                <p>Club management advisor</p>
+              </div>
+            </div>
+            <p className="profile-ai-cta-desc">
+              Ask for event ideas, membership drive strategies, or university policy guidelines.
+            </p>
+            <Button variant="primary" className="full" onClick={() => setActiveTab('ai')}>
+              <Sparkles size={15} /> Launch CampusHub AI
+            </Button>
+          </div>
         </aside>
       </div>
+        </>
+      )}
     </>
   )
 }

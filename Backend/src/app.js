@@ -23,6 +23,7 @@ export function createApp() {
   app.use(cookieParser())
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
   app.use('/api/v1', apiRateLimit, routes)
+  app.use('/api', apiRateLimit, routes)
   app.use(notFound)
   app.use(errorHandler)
   return app
