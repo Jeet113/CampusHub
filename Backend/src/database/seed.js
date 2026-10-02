@@ -31,12 +31,66 @@ const clubProfiles = [
 ]
 
 const clubSeeds = [
-  ['IEEE Computer Society CUET', 'CS', 'Technology', 'A community for computing, research, and practical technology learning.', 2012, '#F59E0B'],
-  ['CUET Robotics Society', 'RS', 'Robotics', 'Designing intelligent machines through collaboration, curiosity, and craft.', 2014, '#34D399'],
-  ['CUET Career Club', 'CC', 'Career', 'Helping students build the skills and connections for meaningful careers.', 2011, '#A78BFA'],
-  ['CUET Debating Society', 'DS', 'Debate', 'A forum for reasoned discourse, public speaking, and competitive debate.', 2005, '#FB7185'],
-  ['CUET Programming Club', 'PC', 'Technology', 'Growing confident problem solvers through contests and peer learning.', 2009, '#60A5FA'],
-  ['CUET Cultural Club', 'CU', 'Cultural', 'Celebrating music, theatre, dance, and the creative spirit of campus.', 2003, '#F472B6'],
+  [
+    'IEEE Computer Society CUET', 'CS', 'Technology', 'A community for computing, research, and practical technology learning.', 2012, '#F59E0B',
+    ['Programming & Technology', 'Robotics', 'Research', 'Career Development'],
+    ['Workshops', 'Coding Competitions', 'Technical Projects', 'Hackathons'],
+    ['Programming', 'Problem Solving', 'Software Engineering', 'Web Development'],
+    ['Learn new skills', 'Work on projects', 'Career development', 'Participate in competitions'],
+    ['Beginner', 'Intermediate', 'Experienced'],
+    '3–5 hours/week',
+    ['Programming', 'Technology', 'Coding', 'Software', 'AI'],
+  ],
+  [
+    'CUET Robotics Society', 'RS', 'Robotics', 'Designing intelligent machines through collaboration, curiosity, and craft.', 2014, '#34D399',
+    ['Robotics', 'Programming & Technology', 'Research', 'Design & Creativity'],
+    ['Hardware Hackathons', 'Robotics Workshops', 'System Design Projects', 'Competitions'],
+    ['Embedded Systems', 'Circuit Design', 'Microcontrollers', 'Robotics Engineering'],
+    ['Learn new skills', 'Work on projects', 'Participate in competitions'],
+    ['Beginner', 'Intermediate', 'Experienced'],
+    '3–5 hours/week',
+    ['Robotics', 'Hardware', 'Circuits', 'IoT', 'Automation'],
+  ],
+  [
+    'CUET Career Club', 'CC', 'Career', 'Helping students build the skills and connections for meaningful careers.', 2011, '#A78BFA',
+    ['Career Development', 'Leadership', 'Business', 'Entrepreneurship', 'Debate & Public Speaking'],
+    ['Career Seminars', 'Corporate Networking', 'CV Clinics', 'Mock Interviews'],
+    ['Resume Building', 'Interviewing', 'Leadership', 'Public Speaking', 'Communication'],
+    ['Career development', 'Improve communication', 'Develop leadership', 'Meet new people'],
+    ['Beginner', 'Intermediate', 'Experienced'],
+    '1–2 hours/week',
+    ['Career', 'Jobs', 'Internships', 'Leadership', 'Networking'],
+  ],
+  [
+    'CUET Debating Society', 'DS', 'Debate', 'A forum for reasoned discourse, public speaking, and competitive debate.', 2005, '#FB7185',
+    ['Debate & Public Speaking', 'Leadership', 'Career Development', 'Research'],
+    ['Parliamentary Debates', 'Public Speaking Masterclasses', 'Tournaments'],
+    ['Public Speaking', 'Critical Thinking', 'Argumentation', 'Research'],
+    ['Improve communication', 'Participate in competitions', 'Develop leadership'],
+    ['Beginner', 'Intermediate', 'Experienced'],
+    '3–5 hours/week',
+    ['Debate', 'Speaking', 'Rhetoric', 'Competitions'],
+  ],
+  [
+    'CUET Programming Club', 'PC', 'Technology', 'Growing confident problem solvers through contests and peer learning.', 2009, '#60A5FA',
+    ['Programming & Technology', 'Research', 'Career Development'],
+    ['Competitive Programming', 'Algorithm Bootcamps', 'Contests', 'Peer Problem Solving'],
+    ['Algorithms', 'Data Structures', 'C++', 'Problem Solving'],
+    ['Participate in competitions', 'Learn new skills', 'Career development'],
+    ['Beginner', 'Intermediate', 'Experienced'],
+    '5–10 hours/week',
+    ['Competitive Programming', 'Algorithms', 'Contests', 'Coding'],
+  ],
+  [
+    'CUET Cultural Club', 'CU', 'Cultural', 'Celebrating music, theatre, dance, and the creative spirit of campus.', 2003, '#F472B6',
+    ['Cultural Activities', 'Design & Creativity', 'Photography', 'Volunteering'],
+    ['Music Concerts', 'Drama & Theatre', 'Campus Festivals', 'Cultural Nights'],
+    ['Stage Performance', 'Music', 'Visual Arts', 'Creative Expression'],
+    ['Socialize', 'Meet new people', 'Learn new skills'],
+    ['Beginner', 'Intermediate', 'Experienced'],
+    '3–5 hours/week',
+    ['Cultural', 'Music', 'Theatre', 'Arts', 'Campus Life'],
+  ],
 ]
 
 const eventSeeds = [
@@ -101,7 +155,7 @@ async function seed() {
 
   const clubs = []
   for (let index = 0; index < clubSeeds.length; index += 1) {
-    const [name, initials, category, description, established, accent] = clubSeeds[index]
+    const [name, initials, category, description, established, accent, interests, activities, skills, goals, experienceLevel, timeCommitment, tags] = clubSeeds[index]
     clubs.push(
       await Club.create({
         name,
@@ -113,6 +167,13 @@ async function seed() {
         established,
         accent,
         status: 'approved',
+        interests: interests || [],
+        activities: activities || [],
+        skills: skills || [],
+        goals: goals || [],
+        experienceLevel: experienceLevel || ['Beginner', 'Intermediate', 'Experienced'],
+        timeCommitment: timeCommitment || '3–5 hours/week',
+        tags: tags || [],
         createdBy: clubUsers[index] || admin,
         verifiedBy: admin,
         verifiedAt: new Date(),

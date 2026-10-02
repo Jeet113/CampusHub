@@ -74,4 +74,73 @@ describe('AI chatbot endpoints security & routing', () => {
 
     expect(response.status).toBe(401)
   })
+
+  it('requires authentication for POST /api/v1/ai/club-recommendations', async () => {
+    const response = await request(app)
+      .post('/api/v1/ai/club-recommendations')
+      .send({
+        interests: ['Programming & Technology'],
+        goal: 'Work on projects',
+        experienceLevel: 'Intermediate',
+        availableTime: '3–5 hours/week',
+      })
+
+    expect(response.status).toBe(401)
+    expect(response.body).toMatchObject({
+      success: false,
+    })
+  })
+
+  it('requires authentication for alias POST /api/ai/club-recommendations', async () => {
+    const response = await request(app)
+      .post('/api/ai/club-recommendations')
+      .send({
+        interests: ['Career Development'],
+        goal: 'Career development',
+        experienceLevel: 'Beginner',
+        availableTime: '1–2 hours/week',
+      })
+
+    expect(response.status).toBe(401)
+    expect(response.body).toMatchObject({
+      success: false,
+    })
+  })
 })
+
+describe('Club Recommender validator', () => {
+  it('rejects empty interests array', async () => {
+    const { clubRecommendationSchema } = await import('../../src/validators/ai.validator.js')
+    const result = clubRecommendationSchema.safeParse({
+      interests: [],
+      goal: 'Learn new skills',
+      experienceLevel: 'Beginner',
+      availableTime: '3–5 hours/week',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects invalid experience level', async () => {
+    const { clubRecommendationSchema } = await import('../../src/validators/ai.validator.js')
+    const result = clubRecommendationSchema.safeParse({
+      interests: ['Robotics'],
+      goal: 'Learn new skills',
+      experienceLevel: 'ProMaster',
+      availableTime: '3–5 hours/week',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts valid recommendation preferences', async () => {
+    const { clubRecommendationSchema } = await import('../../src/validators/ai.validator.js')
+    const result = clubRecommendationSchema.safeParse({
+      interests: ['Programming & Technology', 'Robotics'],
+      goal: 'Work on projects',
+      experienceLevel: 'Intermediate',
+      availableTime: '3–5 hours/week',
+    })
+    expect(result.success).toBe(true)
+    expect(result.data.interests).toHaveLength(2)
+  })
+})
+

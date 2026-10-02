@@ -18,7 +18,7 @@ export async function getProfile(userId) {
 }
 
 export async function updateProfile(userId, data) {
-  const allowed = ['name', 'department', 'batch', 'phone', 'bio']
+  const allowed = ['name', 'department', 'batch', 'phone', 'bio', 'interests', 'skills', 'goals']
   const changes = Object.fromEntries(Object.entries(data).filter(([key]) => allowed.includes(key)))
   for (const [key, value] of Object.entries(data.notificationPreferences || {})) {
     changes[`notificationPreferences.${key}`] = value

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { CalendarDays, Building2, Bell, Bookmark, ArrowRight, MapPin, Clock, Users, Share2, Check, Pencil, Lock, Mail, GraduationCap, Award, Filter, X, Camera, Upload, Bot, Sparkles, User as UserIcon } from 'lucide-react'
+import { CalendarDays, Building2, Bell, Bookmark, ArrowRight, MapPin, Clock, Users, Share2, Check, Pencil, Lock, Mail, GraduationCap, Award, Filter, X, Camera, Upload, Bot, Sparkles, Compass, User as UserIcon } from 'lucide-react'
 import CampusHubAI from '../../components/ai/CampusHubAI'
+import ClubRecommender from '../../components/ai/ClubRecommender'
 import PageHeader from '../../components/layout/PageHeader'
 import StatCard from '../../components/dashboard/StatCard'
 import EventGrid from '../../components/events/EventGrid'
@@ -62,9 +63,15 @@ export function StudentDashboard(){
         description="Here's what's happening around your campus."
         actions={
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/student/profile?tab=recommender">
+              <Button variant="primary">
+                <Sparkles size={16} />
+                <span>Find Clubs For Me</span>
+              </Button>
+            </Link>
             <Link to="/student/profile?tab=ai">
               <Button variant="secondary" className="ai-dash-btn">
-                <Sparkles size={16} className="ai-btn-sparkle" />
+                <Bot size={16} className="ai-btn-sparkle" />
                 <span>CampusHub AI</span>
               </Button>
             </Link>
@@ -194,6 +201,28 @@ export function StudentDashboard(){
         </Link>
       </div>
 
+      <div className="dash-recommender-banner">
+        <div className="dash-ai-banner-left">
+          <div className="dash-ai-banner-icon recommender-banner-icon">
+            <Compass size={24} />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <h4 style={{ margin: 0, fontSize: 16, color: '#fff' }}>Club Recommender AI</h4>
+              <Badge tone="amber">AI Matching</Badge>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: '#9c9ca8', lineHeight: 1.5 }}>
+              Looking for student organizations matched to your interests, career goals, and availability?
+            </p>
+          </div>
+        </div>
+        <Link to="/student/profile?tab=recommender">
+          <Button variant="primary" size="sm" className="dash-ai-banner-btn">
+            <Sparkles size={15} /> Find Clubs For Me <ArrowRight size={15} />
+          </Button>
+        </Link>
+      </div>
+
       <section className="dash-section">
         <SectionHead title="Recommended clubs" link="/student/clubs"/>
         <div className="mini-club-grid">
@@ -213,7 +242,8 @@ export function StudentDashboard(){
         <p className="eyebrow">Quick actions</p>
         <div style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
           {[
-            [Sparkles,'CampusHub AI','/student/profile?tab=ai'],
+            [Compass,'Find Clubs For Me','/student/profile?tab=recommender'],
+            [Bot,'CampusHub AI','/student/profile?tab=ai'],
             [CalendarDays,'Explore events','/student/events'],
             [Building2,'Find clubs','/student/clubs'],
             [Bell,'View notices','/student/notices'],
@@ -419,9 +449,11 @@ export function StudentProfile(){
   const {user,updateUser}=useAuth();
   const {data:dashboard}=useApi(user?'/users/me/dashboard':null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') === 'ai' ? 'ai' : 'profile';
+  const rawTab = searchParams.get('tab');
+  const activeTab = rawTab === 'ai' ? 'ai' : rawTab === 'recommender' ? 'recommender' : 'profile';
   const setActiveTab = (tab) => {
     if (tab === 'ai') setSearchParams({ tab: 'ai' });
+    else if (tab === 'recommender') setSearchParams({ tab: 'recommender' });
     else setSearchParams({});
   };
   const [uploading,setUploading]=useState(false);
@@ -527,18 +559,38 @@ export function StudentProfile(){
     <>
       <PageHeader
         eyebrow="Your account"
-        title={activeTab === 'ai' ? 'CampusHub AI' : 'Profile'}
+        title={
+          activeTab === 'ai'
+            ? 'CampusHub AI'
+            : activeTab === 'recommender'
+            ? 'Club Recommender'
+            : 'Profile'
+        }
         description={
           activeTab === 'ai'
             ? 'Your 24/7 intelligent campus assistant personalized for your university journey.'
+            : activeTab === 'recommender'
+            ? 'AI-powered student club recommendations matched to your profile, interests, and schedule.'
             : 'Your academic identity and CampusHub activity.'
         }
         actions={
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
+              variant={activeTab === 'recommender' ? 'primary' : 'secondary'}
+              onClick={() => setActiveTab('recommender')}
+            >
+              <Sparkles
+                size={16}
+                style={{
+                  color: activeTab === 'recommender' ? '#0a0a0f' : 'var(--accent)',
+                }}
+              />{' '}
+              Find Clubs For Me
+            </Button>
             {activeTab === 'profile' ? (
               <>
                 <Button variant="secondary" onClick={() => setActiveTab('ai')}>
-                  <Sparkles size={16} style={{ color: 'var(--accent)' }} /> CampusHub AI
+                  <Bot size={16} style={{ color: 'var(--accent)' }} /> CampusHub AI
                 </Button>
                 <Button onClick={() => setEditModal(true)}>
                   <Pencil size={17} /> Edit profile
@@ -567,14 +619,30 @@ export function StudentProfile(){
           className={`profile-subnav-btn ai-subnav ${activeTab === 'ai' ? 'active' : ''}`}
           onClick={() => setActiveTab('ai')}
         >
-          <Sparkles size={16} />
+          <Bot size={16} />
           <span>CampusHub AI</span>
           <span className="subnav-pill">Assistant</span>
+        </button>
+        <button
+          type="button"
+          className={`profile-subnav-btn recommender-subnav ${activeTab === 'recommender' ? 'active' : ''}`}
+          onClick={() => setActiveTab('recommender')}
+        >
+          <Compass size={16} />
+          <span>Club Recommender</span>
+          <span
+            className="subnav-pill"
+            style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}
+          >
+            AI Match
+          </span>
         </button>
       </div>
 
       {activeTab === 'ai' ? (
-        <CampusHubAI />
+        <CampusHubAI onOpenRecommender={() => setActiveTab('recommender')} />
+      ) : activeTab === 'recommender' ? (
+        <ClubRecommender />
       ) : (
         <div className="profile-grid">
           <section className="profile-main">

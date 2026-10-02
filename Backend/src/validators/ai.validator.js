@@ -16,3 +16,25 @@ export const chatMessageSchema = z.object({
     .optional()
     .default([]),
 })
+
+export const clubRecommendationSchema = z.object({
+  interests: z
+    .array(z.string().trim().min(1, 'Interest cannot be empty'))
+    .min(1, 'Please select at least one interest'),
+  goal: z
+    .string({ required_error: 'Please select your primary goal' })
+    .trim()
+    .min(1, 'Please select your primary goal'),
+  experienceLevel: z.preprocess(
+    (v) => (typeof v === 'string' ? v.trim() : v),
+    z.enum(['Beginner', 'Intermediate', 'Experienced'], {
+      errorMap: () => ({ message: 'Please select a valid experience level' }),
+    }),
+  ),
+  availableTime: z.preprocess(
+    (v) => (typeof v === 'string' ? v.trim() : v),
+    z.string({ required_error: 'Please select your available time' })
+      .min(1, 'Please select your available time'),
+  ),
+})
+

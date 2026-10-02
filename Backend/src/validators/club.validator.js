@@ -16,6 +16,13 @@ const clubFields = {
     return num >= 1800 ? num : undefined
   }, z.number().int().min(1800).max(new Date().getFullYear()).optional()),
   accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  interests: z.array(z.string().trim().max(100)).optional(),
+  activities: z.array(z.string().trim().max(100)).optional(),
+  skills: z.array(z.string().trim().max(100)).optional(),
+  goals: z.array(z.string().trim().max(100)).optional(),
+  experienceLevel: z.array(z.string().trim().max(50)).optional(),
+  timeCommitment: z.string().trim().max(100).optional(),
+  tags: z.array(z.string().trim().max(50)).optional(),
 }
 
 export const createClubSchema = z.object(clubFields)

@@ -1,11 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { getEnv } from '../config/env.js'
 import ApiError from '../utils/ApiError.js'
-import {
-  resolveCampusData,
-  campusToolsDeclarations,
-  campusToolsHandlers,
-} from './campusData.service.js'
+import { resolveCampusData } from './campusData.service.js'
 
 let genAIClient = null
 let currentApiKey = null

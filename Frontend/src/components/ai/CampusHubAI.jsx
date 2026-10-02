@@ -21,6 +21,12 @@ import { useAuth } from '../../hooks/useAuth'
 
 const SUGGESTED_QUESTIONS = [
   {
+    icon: Sparkles,
+    text: 'Find Clubs For Me',
+    category: 'AI Match',
+    action: 'recommender',
+  },
+  {
     icon: CompassIcon,
     text: 'What can I do on CampusHub?',
     category: 'Overview',
@@ -94,7 +100,7 @@ function CodeBlock({ children, className, ...props }) {
   )
 }
 
-export default function CampusHubAI({ initialContext = null, onClear }) {
+export default function CampusHubAI({ initialContext = null, onClear, onOpenRecommender }) {
   const { user } = useAuth()
   const [messages, setMessages] = useState([])
   const [inputValue, setInputValue] = useState('')
@@ -261,6 +267,18 @@ export default function CampusHubAI({ initialContext = null, onClear }) {
         </div>
 
         <div className="campushub-ai-header-actions">
+          {onOpenRecommender && (
+            <button
+              type="button"
+              className="campushub-ai-clear-btn"
+              onClick={onOpenRecommender}
+              title="Find Clubs For Me"
+              style={{ borderColor: 'rgba(245, 158, 11, 0.3)', color: 'var(--accent)' }}
+            >
+              <Sparkles size={14} />
+              <span>Find Clubs For Me</span>
+            </button>
+          )}
           {messages.length > 0 && (
             <button
               type="button"
@@ -303,7 +321,13 @@ export default function CampusHubAI({ initialContext = null, onClear }) {
                       key={idx}
                       type="button"
                       className="prompt-card"
-                      onClick={() => sendMessage(q.text)}
+                      onClick={() => {
+                        if (q.action === 'recommender' && onOpenRecommender) {
+                          onOpenRecommender()
+                        } else {
+                          sendMessage(q.text)
+                        }
+                      }}
                     >
                       <div className="prompt-icon">
                         <Icon size={16} />

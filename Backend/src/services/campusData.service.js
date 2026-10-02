@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import User from '../models/User.js'
 import Club from '../models/Club.js'
 import Event from '../models/Event.js'
 import Notice from '../models/Notice.js'

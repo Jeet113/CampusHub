@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema(
     profileImage: assetSchema,
     phone: { type: String, trim: true, maxlength: 30 },
     bio: { type: String, trim: true, maxlength: 500 },
+    interests: [{ type: String, trim: true }],
+    skills: [{ type: String, trim: true }],
+    goals: [{ type: String, trim: true }],
     status: { type: String, enum: USER_STATUSES, default: 'active', index: true },
     notificationPreferences: {
       email: { type: Boolean, default: true },
