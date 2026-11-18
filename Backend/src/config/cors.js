@@ -22,9 +22,8 @@ export function createCorsOptions() {
         if (isLocalhost) return callback(null, true)
       }
 
-      // Allow Vercel preview or production deployments if any .vercel.app origin is configured
-      const hasVercelAllowed = allowedOrigins.some((o) => o.includes('.vercel.app'))
-      if (hasVercelAllowed && /^https:\/\/[a-z0-9-]+[a-z0-9]\.vercel\.app$/.test(cleanOrigin)) {
+      // Automatically allow Vercel deployment domains (*.vercel.app)
+      if (/^https:\/\/[a-z0-9-]+[a-z0-9]\.vercel\.app$/.test(cleanOrigin)) {
         return callback(null, true)
       }
 

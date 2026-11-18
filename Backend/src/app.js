@@ -44,6 +44,7 @@ export function createApp() {
 
   app.use('/api/v1', apiRateLimit, routes)
   app.use('/api', apiRateLimit, routes)
+  app.use('/', apiRateLimit, routes)
   app.use(notFound)
   app.use(errorHandler)
   return app

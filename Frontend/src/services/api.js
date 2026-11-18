@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'
+const rawApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').trim().replace(/\/+$/, '')
+const API_URL = rawApiUrl.endsWith('/api/v1')
+  ? rawApiUrl
+  : rawApiUrl.endsWith('/api')
+    ? `${rawApiUrl}/v1`
+    : `${rawApiUrl}/api/v1`
 
 const ACCESS_TOKEN_KEY = 'campushub_access_token'
 const REFRESH_TOKEN_KEY = 'campushub_refresh_token'

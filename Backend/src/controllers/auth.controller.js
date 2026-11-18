@@ -20,7 +20,7 @@ function cookieOptions(token) {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
     sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/api/v1/auth',
+    path: '/',
     maxAge,
   }
 }
@@ -68,7 +68,7 @@ export async function logout(request, response) {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
     sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/api/v1/auth',
+    path: '/',
   })
   return response.json(new ApiResponse(null, 'Signed out successfully'))
 }
